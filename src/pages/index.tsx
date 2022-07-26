@@ -54,6 +54,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       },
     },
   });
+  console.log(foodEntries);
 
   return {
     props: {

@@ -1,6 +1,8 @@
 import { FoodEntry } from "@prisma/client";
 import React from "react";
 import { ErrorMessage, Formik } from "formik";
+import { z } from "zod";
+import { useSession } from "next-auth/react";
 
 type FoodEditMenuProps = {
   foodEntry?: FoodEntry;
@@ -8,10 +10,11 @@ type FoodEditMenuProps = {
 };
 
 const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
+  const { data } = useSession();
   return (
     <div
-      className="fixed flex justify-center items-center h-full w-full bg-black opacity-60 top-0 left-0"
-      onClick={onClose}
+      className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"
+      // onClick={onClose}
     >
       <Formik
         initialValues={{
@@ -26,37 +29,71 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
             }),
           price: foodEntry?.price || "",
         }}
-        onSubmit={(values, { setSubmitting }) => {
-          setSubmitting(false);
-        }}
-        validate={(values) => {
-          const errors: {
-            name?: string;
-            calories?: string | number;
-            date?: string | undefined;
-            price?: string | number;
-          } = {};
-          if (!values.name) {
-            errors.name = "Required";
-          }
-          if (!values.calories) {
-            errors.calories = "Required";
-          }
-          if (!values.price) {
-            errors.price = "Required";
-          }
-          if (!values.date) {
-            errors.date = "Required";
-          }
-          // make sure date is in the past
-          // turn HH:MM:SS string into date object
+        onSubmit={async (values, { setSubmitting }) => {
+          setSubmitting(true);
           const [hours, mins, secs] = values.date
             ?.split(":")
             .map(Number) as number[];
           const date = new Date().setHours(hours || 0, mins || 0, secs || 0);
-          if (date > Date.now()) {
-            errors.date = "Date must be in the past";
+          // create new food entry
+          if (!foodEntry) {
+            await fetch("/api/user/food", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                foodEntry: {
+                  ...values,
+                  userId: data?.user?.id,
+                  date: new Date(date),
+                },
+              }),
+            });
           }
+          setSubmitting(false);
+          onClose?.();
+        }}
+        validate={(values) => {
+          const errors: Record<string, string> = {};
+          const [hours, mins, secs] = values.date
+            ?.split(":")
+            .map(Number) as number[];
+          const date = new Date().setHours(hours || 0, mins || 0, secs || 0);
+          const validators = {
+            name: z
+              .string({
+                required_error: "Name is required",
+              })
+              .min(1, "Name is required")
+              .safeParse(values.name),
+            calories: z
+              .number({
+                required_error: "Calories are required",
+                invalid_type_error: "Price is required",
+              })
+              .positive("Calories must be positive")
+              .safeParse(values.calories),
+            price: z
+              .number({
+                required_error: "Price is required",
+                invalid_type_error: "Price is required",
+              })
+              .positive("Price must be positive")
+              .safeParse(values.price),
+            date: z
+              .date({
+                required_error: "Date is required",
+                invalid_type_error: "Date is required",
+              })
+              .max(new Date(), "Date must be in the past")
+              .safeParse(new Date(date)),
+          };
+          Object.entries(validators).forEach(([key, val]) => {
+            if (!val.success) {
+              errors[key] = val.error.formErrors.formErrors[0] || "";
+            }
+          });
           return errors;
         }}
       >
