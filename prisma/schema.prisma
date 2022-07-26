@@ -10,10 +10,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Example {
-    id String @id @default(cuid())
-}
-
 // Necessary for Next auth
 model Account {
     id                String  @id @default(cuid())
@@ -53,17 +49,21 @@ model User {
     id            String      @id @default(cuid())
     name          String?
     email         String?     @unique
+    image         String?
     emailVerified DateTime?
     accounts      Account[]
     sessions      Session[]
     FoodEntry     FoodEntry[]
+    maxCalories   Int         @default(2100)
+    maxPrice      Int         @default(1000)
+    admin         Boolean     @default(false)
 }
 
 model FoodEntry {
     id       String   @id @default(cuid())
     name     String
     calories Int
-    price    Int
+    price    Float
     userId   String
     date     DateTime
     user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)

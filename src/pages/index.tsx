@@ -1,20 +1,17 @@
 import { FoodEntry } from "@prisma/client";
 import type { GetServerSideProps, NextPage } from "next";
+import { Session } from "next-auth";
+import { getSession, signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import FoodEntryList from "../components/food-entry-list/FoodEntryList";
+import { prisma } from "../server/db/client";
 
-const FoodEntryMock: FoodEntry[] = [
-  {
-    id: "1",
-    name: "Pizza",
-    calories: 500,
-    price: 10,
-    date: new Date(),
-    userId: "1",
-  },
-];
+type HomeProps = {
+  session: Session | null;
+  foodEntries: FoodEntry[];
+};
 
-const Home: NextPage = () => {
+const Home: NextPage<HomeProps> = ({ foodEntries }) => {
   return (
     <>
       <Head>
@@ -28,7 +25,7 @@ const Home: NextPage = () => {
           Calory <span className="text-purple-300">Tracker</span> App
         </h1>
         <div className="pb-5">
-          <FoodEntryList foodEntries={FoodEntryMock} />
+          <FoodEntryList foodEntries={foodEntries} />
         </div>
       </main>
     </>
@@ -36,3 +33,28 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+// make sure user is logged in and redirect to login page if not
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const session = await getSession(ctx);
+  if (!session) {
+    ctx.res.writeHead(302, {
+      Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
+    });
+    ctx.res.end();
+    return { props: {} };
+  }
+
+  const foodEntries = await prisma.foodEntry.findMany({
+    where: {
+      userId: session.user?.id,
+    },
+  });
+
+  return {
+    props: {
+      session,
+      foodEntries,
+    },
+  };
+};
