@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useSession } from "next-auth/react";
 
 type FoodEditMenuProps = {
-  foodEntry?: FoodEntry;
+  foodEntry?: FoodEntry | null;
   onClose?: () => void;
 };
 
@@ -14,14 +14,14 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
   return (
     <div
       className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"
-      // onClick={onClose}
+      onClick={onClose}
     >
       <Formik
         initialValues={{
           name: foodEntry?.name || "",
           calories: foodEntry?.calories || "",
           date:
-            foodEntry?.date?.toLocaleTimeString([], {
+            new Date(foodEntry?.date || "").toLocaleTimeString([], {
               hourCycle: "h23",
             }) ||
             new Date().toLocaleTimeString([], {
@@ -35,22 +35,20 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
             ?.split(":")
             .map(Number) as number[];
           const date = new Date().setHours(hours || 0, mins || 0, secs || 0);
-          // create new food entry
-          if (!foodEntry) {
-            await fetch("/api/user/food", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
+          await fetch("/api/user/food", {
+            method: foodEntry ? "PATCH" : "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              foodEntry: {
+                ...(foodEntry || {}),
+                ...values,
+                userId: data?.user?.id,
+                date: new Date(date),
               },
-              body: JSON.stringify({
-                foodEntry: {
-                  ...values,
-                  userId: data?.user?.id,
-                  date: new Date(date),
-                },
-              }),
-            });
-          }
+            }),
+          });
           setSubmitting(false);
           onClose?.();
         }}

@@ -15,6 +15,10 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
       const { foodEntry } = req.body;
       const result = await addFoodEntry(foodEntry);
       res.status(201).send(result);
+    } else if (req.method === "PATCH") {
+      const { foodEntry } = req.body;
+      const result = await updateFoodEntry(foodEntry);
+      res.status(201).send(result);
     } else if (req.method === "GET") {
       const foodEntries = await listFoodEntries(session);
       res.send(foodEntries);
@@ -24,8 +28,9 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
       }: {
         foodEntry: FoodEntry;
       } = req.body;
+
       await deleteFoodEntries(foodEntry?.id);
-      res.status(200);
+      res.status(200).send({});
     }
   } else {
     res.send({
@@ -37,6 +42,17 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
 
 const addFoodEntry = async (foodEntry: FoodEntry) => {
   const result = await prisma.foodEntry.create({
+    data: {
+      ...foodEntry,
+    },
+  });
+  return result;
+};
+const updateFoodEntry = async (foodEntry: FoodEntry) => {
+  const result = await prisma.foodEntry.update({
+    where: {
+      id: foodEntry.id,
+    },
     data: {
       ...foodEntry,
     },

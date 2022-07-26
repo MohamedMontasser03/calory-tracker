@@ -9,6 +9,13 @@ type FoodEntryListProps = {
 
 const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
   const [showEditMenu, setShowEditMenu] = React.useState(false);
+  const [isUpdating, setIsUpdating] = React.useState<FoodEntry | null>(null);
+
+  const onUpdate = (foodEntry: FoodEntry) => {
+    setIsUpdating(foodEntry);
+    setShowEditMenu(true);
+  };
+
   return (
     <div className="bg-purple-300 rounded flex flex-col p-2 w-80">
       <div className=" flex flex-row justify-between pb-2">
@@ -22,10 +29,26 @@ const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
       </div>
       <div className="flex flex-col gap-4">
         {foodEntries.map((foodEntry) => (
-          <FoodEntryCard key={foodEntry.id} foodEntry={foodEntry} />
+          <FoodEntryCard
+            onUpdate={onUpdate}
+            key={foodEntry.id}
+            foodEntry={foodEntry}
+          />
         ))}
       </div>
-      {showEditMenu && <FoodEditMenu onClose={() => setShowEditMenu(false)} />}
+      <span>
+        Total Calories: {foodEntries.reduce((p, v) => p + v.calories, 0)} calory
+      </span>
+      <span>Total Price: {foodEntries.reduce((p, v) => p + v.price, 0)}$</span>
+      {showEditMenu && (
+        <FoodEditMenu
+          foodEntry={isUpdating}
+          onClose={() => {
+            setShowEditMenu(false);
+            setIsUpdating(null);
+          }}
+        />
+      )}
     </div>
   );
 };

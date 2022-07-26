@@ -54,12 +54,11 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       },
     },
   });
-  console.log(foodEntries);
 
   return {
     props: {
       session,
-      foodEntries,
+      foodEntries: JSON.parse(JSON.stringify(foodEntries)),
     },
   };
 };
