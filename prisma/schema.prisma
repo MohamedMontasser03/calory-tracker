@@ -62,7 +62,7 @@ model User {
 model FoodEntry {
     id       String   @id @default(cuid())
     name     String
-    calories Int
+    calories Float
     price    Float
     userId   String
     date     DateTime
