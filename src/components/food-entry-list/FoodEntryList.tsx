@@ -1,5 +1,5 @@
 import { FoodEntry } from "@prisma/client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import FoodEditMenu from "../food-edit-menu/FoodEditMenu";
 import FoodEntryCard from "./FoodEntryCard";
 
@@ -15,6 +15,8 @@ const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
     setIsUpdating(foodEntry);
     setShowEditMenu(true);
   };
+
+  useEffect(() => {}, [foodEntries]);
 
   return (
     <div className="bg-purple-300 rounded flex flex-col p-2 w-80 md:w-96">
@@ -48,7 +50,9 @@ const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
         </div>
         <div className="flex flex-col">
           <span>Max Calories: 2400 calory</span>
-          <span>Max Price: 1,000$</span>
+          <button className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors">
+            Change Max Calories
+          </button>
         </div>
       </div>
       {showEditMenu && (
