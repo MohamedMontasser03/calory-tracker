@@ -17,8 +17,8 @@ const MyApp: AppType = ({
         <Component {...pageProps} />
         <ToastContainer
           position="top-right"
-          autoClose={8000}
-          hideProgressBar={false}
+          autoClose={2000}
+          hideProgressBar={true}
           newestOnTop={false}
           draggable={false}
           pauseOnFocusLoss

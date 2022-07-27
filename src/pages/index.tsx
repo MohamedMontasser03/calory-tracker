@@ -14,8 +14,12 @@ type HomeProps = {
   maxCalories: number;
 };
 
-const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
-  const { data, isLoading } = useQuery(
+const Home: NextPage<HomeProps> = ({
+  foodEntries: initialFoodEntries,
+  user,
+  maxCalories,
+}) => {
+  const { data: foodEntries, isLoading: loadingFoodEntries } = useQuery(
     ["foodEntries"],
     async () => {
       const res = await fetch("/api/user/food");
@@ -23,7 +27,18 @@ const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
     },
     {
       enabled: user !== null,
-      initialData: foodEntries,
+      initialData: initialFoodEntries,
+      staleTime: 1000,
+    }
+  );
+  const { data: maxCaloriesData, isLoading: loadingMaxCalories } = useQuery(
+    ["maxCalories"],
+    async () => {
+      const res = await fetch("/api/user/calory");
+      return await res.json();
+    },
+    {
+      initialData: { maxCalories },
       staleTime: 1000,
     }
   );
@@ -43,10 +58,13 @@ const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
           Calory <span className="text-purple-300">Tracker</span> App
         </h1>
         <div className="pb-5">
-          {isLoading ? (
+          {loadingFoodEntries || loadingMaxCalories ? (
             <div className="text-gray-700">Loading...</div>
           ) : (
-            <FoodEntryList foodEntries={data} maxCalories={maxCalories} />
+            <FoodEntryList
+              foodEntries={foodEntries}
+              maxCalories={maxCaloriesData.maxCalories}
+            />
           )}
         </div>
       </main>

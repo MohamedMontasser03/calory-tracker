@@ -4,6 +4,7 @@ import { ErrorMessage, Formik } from "formik";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 type FoodEditMenuProps = {
   foodEntry?: FoodEntry | null;
@@ -73,6 +74,11 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
           });
           setSubmitting(false);
           onClose?.();
+          toast(`Food ${foodEntry ? "Edited" : "Added"} Successfully`, {
+            type: "success",
+            autoClose: 2000,
+            hideProgressBar: true,
+          });
         }}
         validate={(values) => {
           const errors: Record<string, string> = {};
