@@ -2,6 +2,7 @@ import { FoodEntry } from "@prisma/client";
 import React, { useEffect, useState } from "react";
 import FoodEditMenu from "../food-edit-menu/FoodEditMenu";
 import FoodEntryCard from "./FoodEntryCard";
+import { toast } from "react-toastify";
 
 type FoodEntryListProps = {
   foodEntries: FoodEntry[];
@@ -23,7 +24,11 @@ const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
 
   useEffect(() => {
     if (calories > maxCalories) {
-      console.log(`Warning: You've consumed ${calories} calories`);
+      toast("You've consumed too many calories!", {
+        type: "warning",
+        autoClose: 3000,
+        hideProgressBar: true,
+      });
     }
   }, [foodEntries, maxCalories, calories]);
 
