@@ -3,6 +3,7 @@ import React from "react";
 import { ErrorMessage, Formik } from "formik";
 import { z } from "zod";
 import { useSession } from "next-auth/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type FoodEditMenuProps = {
   foodEntry?: FoodEntry | null;
@@ -11,6 +12,39 @@ type FoodEditMenuProps = {
 
 const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
   const { data } = useSession();
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation(
+    ["foodEntries"],
+    async ({
+      values,
+      date,
+    }: {
+      values: Record<string, string | number>;
+      date: number;
+    }) => {
+      const res = await fetch("/api/user/food", {
+        method: foodEntry ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          foodEntry: {
+            ...(foodEntry || {}),
+            ...values,
+            userId: data?.user?.id,
+            date: new Date(date),
+          },
+        }),
+      });
+      return await res.json();
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["foodEntries"]);
+      },
+    }
+  );
+
   return (
     <div
       className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"
@@ -33,19 +67,9 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
             ?.split(":")
             .map(Number) as number[];
           const date = new Date().setHours(hours || 0, mins || 0, secs || 0);
-          await fetch("/api/user/food", {
-            method: foodEntry ? "PATCH" : "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              foodEntry: {
-                ...(foodEntry || {}),
-                ...values,
-                userId: data?.user?.id,
-                date: new Date(date),
-              },
-            }),
+          mutate({
+            values,
+            date,
           });
           setSubmitting(false);
           onClose?.();

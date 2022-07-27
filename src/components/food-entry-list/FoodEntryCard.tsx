@@ -1,4 +1,5 @@
 import { FoodEntry } from "@prisma/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 
 type FoodEntryCardProps = {
@@ -7,17 +8,27 @@ type FoodEntryCardProps = {
 };
 
 const FoodEntryCard = ({ foodEntry, onUpdate }: FoodEntryCardProps) => {
-  const onDelete = () => {
-    fetch("/api/user/food", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation(
+    ["foodEntries"],
+    async () => {
+      const res = await fetch("/api/user/food", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          foodEntry,
+        }),
+      });
+      return await res.json();
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["foodEntries"]);
       },
-      body: JSON.stringify({
-        foodEntry,
-      }),
-    });
-  };
+    }
+  );
 
   return (
     <div className="flex flex-row justify-between bg-purple-500 rounded px-2 py-4">
@@ -40,7 +51,7 @@ const FoodEntryCard = ({ foodEntry, onUpdate }: FoodEntryCardProps) => {
           Edit
         </button>
         <button
-          onClick={onDelete}
+          onClick={() => mutate()}
           className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
         >
           Delete

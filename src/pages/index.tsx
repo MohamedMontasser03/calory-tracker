@@ -1,4 +1,5 @@
 import { FoodEntry } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
 import type { GetServerSideProps, NextPage } from "next";
 import { User } from "next-auth";
 import { getSession } from "next-auth/react";
@@ -13,6 +14,19 @@ type HomeProps = {
 };
 
 const Home: NextPage<HomeProps> = ({ foodEntries, user }) => {
+  const { data, isLoading } = useQuery(
+    ["foodEntries"],
+    async () => {
+      const res = await fetch("/api/user/food");
+      return await res.json();
+    },
+    {
+      enabled: user !== null,
+      initialData: foodEntries,
+      staleTime: 1000,
+    }
+  );
+
   return (
     <>
       <Head>
@@ -24,11 +38,15 @@ const Home: NextPage<HomeProps> = ({ foodEntries, user }) => {
       <Header user={user} />
 
       <main className="container mx-auto flex flex-col items-center h-screen p-4 text-white">
-        <h1 className="text-2xl md:text-4xl leading-normal font-extrabold text-gray-700 mb-4">
+        <h1 className="text-2xl md:text-4xl leading-normal font-extrabold mb-4 text-gray-700">
           Calory <span className="text-purple-300">Tracker</span> App
         </h1>
         <div className="pb-5">
-          <FoodEntryList foodEntries={foodEntries} />
+          {isLoading ? (
+            <div className="text-gray-700">Loading...</div>
+          ) : (
+            <FoodEntryList foodEntries={data} />
+          )}
         </div>
       </main>
     </>
