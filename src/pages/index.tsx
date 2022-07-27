@@ -11,9 +11,10 @@ import { prisma } from "../server/db/client";
 type HomeProps = {
   user: User;
   foodEntries: FoodEntry[];
+  maxCalories: number;
 };
 
-const Home: NextPage<HomeProps> = ({ foodEntries, user }) => {
+const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
   const { data, isLoading } = useQuery(
     ["foodEntries"],
     async () => {
@@ -45,7 +46,7 @@ const Home: NextPage<HomeProps> = ({ foodEntries, user }) => {
           {isLoading ? (
             <div className="text-gray-700">Loading...</div>
           ) : (
-            <FoodEntryList foodEntries={data} />
+            <FoodEntryList foodEntries={data} maxCalories={maxCalories} />
           )}
         </div>
       </main>
@@ -75,10 +76,15 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       },
     },
   });
+  const userData = await prisma.user.findUnique({
+    where: { id: session.user?.id },
+    select: { maxCalories: true },
+  });
 
   return {
     props: {
       user: session.user,
+      maxCalories: userData?.maxCalories,
       foodEntries: JSON.parse(JSON.stringify(foodEntries)),
     },
   };

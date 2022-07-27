@@ -5,18 +5,27 @@ import FoodEntryCard from "./FoodEntryCard";
 
 type FoodEntryListProps = {
   foodEntries: FoodEntry[];
+  maxCalories: number;
 };
 
-const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
+const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState<FoodEntry | null>(null);
+  const calories = foodEntries.reduce(
+    (acc, foodEntry) => acc + foodEntry.calories,
+    0
+  );
 
   const onUpdate = (foodEntry: FoodEntry) => {
     setIsUpdating(foodEntry);
     setShowEditMenu(true);
   };
 
-  useEffect(() => {}, [foodEntries]);
+  useEffect(() => {
+    if (calories > maxCalories) {
+      console.log(`Warning: You've consumed ${calories} calories`);
+    }
+  }, [foodEntries, maxCalories, calories]);
 
   return (
     <div className="bg-purple-300 rounded flex flex-col p-2 w-80 md:w-96">
@@ -40,16 +49,13 @@ const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
       </div>
       <div className="flex justify-between">
         <div className="flex flex-col">
-          <span>
-            Total Calories: {foodEntries.reduce((p, v) => p + v.calories, 0)}{" "}
-            calory
-          </span>
+          <span>Total Calories: {calories} calory</span>
           <span>
             Total Price: {foodEntries.reduce((p, v) => p + v.price, 0)}$
           </span>
         </div>
         <div className="flex flex-col">
-          <span>Max Calories: 2400 calory</span>
+          <span>Max Calories: {maxCalories} calory</span>
           <button className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors">
             Change Max Calories
           </button>
