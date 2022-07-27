@@ -64,6 +64,10 @@ const listFoodEntries = async (session: Session) => {
   const foodEntries = await prisma.foodEntry.findMany({
     where: {
       userId: session.user?.id,
+      date: {
+        gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        lte: new Date(new Date().setHours(23, 59, 59, 999)),
+      },
     },
   });
   return foodEntries;

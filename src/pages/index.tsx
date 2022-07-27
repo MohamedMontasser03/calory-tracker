@@ -4,6 +4,7 @@ import type { GetServerSideProps, NextPage } from "next";
 import { User } from "next-auth";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
+import Link from "next/link";
 import FoodEntryList from "../components/food-entry-list/FoodEntryList";
 import Header from "../components/header/Header";
 import { prisma } from "../server/db/client";
@@ -58,6 +59,9 @@ const Home: NextPage<HomeProps> = ({
           Calory <span className="text-purple-300">Tracker</span> App
         </h1>
         <div className="pb-5">
+          <Link href="/summary">
+            <a className="text-purple-300">Summary</a>
+          </Link>
           {loadingFoodEntries || loadingMaxCalories ? (
             <div className="text-gray-700">Loading...</div>
           ) : (
@@ -84,7 +88,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     ctx.res.end();
     return { props: {} };
   }
-
   const foodEntries = await prisma.foodEntry.findMany({
     where: {
       userId: session.user?.id,
@@ -96,8 +99,15 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   });
   const userData = await prisma.user.findUnique({
     where: { id: session.user?.id },
-    select: { maxCalories: true },
+    select: { maxCalories: true, admin: true },
   });
+  if (userData?.admin) {
+    ctx.res.writeHead(302, {
+      Location: "/admin",
+    });
+    ctx.res.end();
+    return { props: {} };
+  }
 
   return {
     props: {

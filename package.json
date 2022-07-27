@@ -17,6 +17,7 @@
     "next": "12.2.3",
     "next-auth": "^4.10.2",
     "react": "18.2.0",
+    "react-date-range": "^1.4.0",
     "react-dom": "18.2.0",
     "react-toastify": "^9.0.7",
     "zod": "^3.17.3"
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@types/node": "18.0.0",
     "@types/react": "18.0.14",
+    "@types/react-date-range": "^1.4.4",
     "@types/react-dom": "18.0.5",
     "autoprefixer": "^10.4.7",
     "eslint": "8.18.0",
