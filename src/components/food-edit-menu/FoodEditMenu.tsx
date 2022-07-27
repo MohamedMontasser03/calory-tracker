@@ -20,13 +20,11 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
         initialValues={{
           name: foodEntry?.name || "",
           calories: foodEntry?.calories || "",
-          date:
-            new Date(foodEntry?.date || "").toLocaleTimeString([], {
-              hourCycle: "h23",
-            }) ||
-            new Date().toLocaleTimeString([], {
-              hourCycle: "h23",
-            }),
+          date: new Date(
+            foodEntry ? foodEntry.date : Date()
+          ).toLocaleTimeString([], {
+            hourCycle: "h23",
+          }),
           price: foodEntry?.price || "",
         }}
         onSubmit={async (values, { setSubmitting }) => {

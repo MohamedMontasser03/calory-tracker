@@ -1,5 +1,5 @@
 import { FoodEntry } from "@prisma/client";
-import React from "react";
+import React, { useState } from "react";
 import FoodEditMenu from "../food-edit-menu/FoodEditMenu";
 import FoodEntryCard from "./FoodEntryCard";
 
@@ -8,8 +8,8 @@ type FoodEntryListProps = {
 };
 
 const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
-  const [showEditMenu, setShowEditMenu] = React.useState(false);
-  const [isUpdating, setIsUpdating] = React.useState<FoodEntry | null>(null);
+  const [showEditMenu, setShowEditMenu] = useState(false);
+  const [isUpdating, setIsUpdating] = useState<FoodEntry | null>(null);
 
   const onUpdate = (foodEntry: FoodEntry) => {
     setIsUpdating(foodEntry);
