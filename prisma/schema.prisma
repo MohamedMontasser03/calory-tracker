@@ -55,6 +55,7 @@ model User {
     sessions      Session[]
     FoodEntry     FoodEntry[]
     maxCalories   Int         @default(2100)
+    maxPrice      Int         @default(1000)
     admin         Boolean     @default(false)
 }
 

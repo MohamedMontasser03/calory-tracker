@@ -18,6 +18,11 @@ const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
     (acc, foodEntry) => acc + foodEntry.calories,
     0
   );
+  const price = foodEntries.reduce(
+    (acc, foodEntry) => acc + foodEntry.price,
+    0
+  );
+  const maxPrice = 1000;
 
   const onUpdate = (foodEntry: FoodEntry) => {
     setIsUpdating(foodEntry);
@@ -32,7 +37,14 @@ const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
         hideProgressBar: true,
       });
     }
-  }, [foodEntries, maxCalories, calories]);
+    if (price > maxPrice) {
+      toast("You've Paid too much!", {
+        type: "warning",
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    }
+  }, [foodEntries, maxCalories, calories, price]);
 
   return (
     <div className="bg-purple-300 rounded flex flex-col p-2 w-80 md:w-96">
@@ -57,12 +69,11 @@ const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
       <div className="flex justify-between flex-col md:flex-row">
         <div className="flex flex-col">
           <span>Total Calories: {calories} calory</span>
-          <span>
-            Total Price: {foodEntries.reduce((p, v) => p + v.price, 0)}$
-          </span>
+          <span>Total Price: {price}$</span>
         </div>
         <div className="flex flex-col">
           <span>Max Calories: {maxCalories} calory</span>
+          <span>Max Price: 1000$</span>
           <button
             onClick={() => setShowMaxCaloryMenu(true)}
             className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
