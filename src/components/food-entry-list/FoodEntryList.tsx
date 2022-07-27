@@ -17,7 +17,7 @@ const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
   };
 
   return (
-    <div className="bg-purple-300 rounded flex flex-col p-2 w-80">
+    <div className="bg-purple-300 rounded flex flex-col p-2 w-80 md:w-96">
       <div className=" flex flex-row justify-between pb-2">
         <h1 className="font-semibold">Food Entry List</h1>
         <button
@@ -36,10 +36,21 @@ const FoodEntryList = ({ foodEntries }: FoodEntryListProps) => {
           />
         ))}
       </div>
-      <span>
-        Total Calories: {foodEntries.reduce((p, v) => p + v.calories, 0)} calory
-      </span>
-      <span>Total Price: {foodEntries.reduce((p, v) => p + v.price, 0)}$</span>
+      <div className="flex justify-between">
+        <div className="flex flex-col">
+          <span>
+            Total Calories: {foodEntries.reduce((p, v) => p + v.calories, 0)}{" "}
+            calory
+          </span>
+          <span>
+            Total Price: {foodEntries.reduce((p, v) => p + v.price, 0)}$
+          </span>
+        </div>
+        <div className="flex flex-col">
+          <span>Max Calories: 2400 calory</span>
+          <span>Max Price: 1,000$</span>
+        </div>
+      </div>
       {showEditMenu && (
         <FoodEditMenu
           foodEntry={isUpdating}

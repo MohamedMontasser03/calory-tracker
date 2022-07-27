@@ -1,14 +1,14 @@
 import { FoodEntry } from "@prisma/client";
 import type { GetServerSideProps, NextPage } from "next";
 import { User } from "next-auth";
-import { getSession, signOut } from "next-auth/react";
+import { getSession } from "next-auth/react";
 import Head from "next/head";
-import Image from "next/image";
 import FoodEntryList from "../components/food-entry-list/FoodEntryList";
+import Header from "../components/header/Header";
 import { prisma } from "../server/db/client";
 
 type HomeProps = {
-  user?: User;
+  user: User;
   foodEntries: FoodEntry[];
 };
 
@@ -21,26 +21,7 @@ const Home: NextPage<HomeProps> = ({ foodEntries, user }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <header className="flex justify-center flex-col items-center">
-        <div className="flex justify-center items-center gap-2">
-          <p>Welcome, {user?.name}</p>
-          <Image
-            src={user?.image || ""}
-            alt="Profile"
-            width={32}
-            height={32}
-            className="rounded-full"
-          />
-        </div>
-        <p>
-          <button
-            className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
-            onClick={() => signOut()}
-          >
-            Sign out
-          </button>
-        </p>
-      </header>
+      <Header user={user} />
 
       <main className="container mx-auto flex flex-col items-center h-screen p-4 text-white">
         <h1 className="text-2xl md:text-4xl leading-normal font-extrabold text-gray-700 mb-4">
