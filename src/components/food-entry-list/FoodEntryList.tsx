@@ -10,6 +10,7 @@ type FoodEntryListProps = {
   maxCalories: number;
   isFullDate?: boolean;
   noEdit?: boolean;
+  userId?: string;
 };
 
 const FoodEntryList = ({
@@ -17,6 +18,7 @@ const FoodEntryList = ({
   maxCalories,
   isFullDate = false,
   noEdit = false,
+  userId,
 }: FoodEntryListProps) => {
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [showMaxCaloryMenu, setShowMaxCaloryMenu] = useState(false);
@@ -37,21 +39,21 @@ const FoodEntryList = ({
   };
 
   useEffect(() => {
-    if (calories > maxCalories && !noEdit) {
+    if (calories > maxCalories && !noEdit && !userId) {
       toast("You've consumed too many calories!", {
         type: "warning",
         autoClose: 2000,
         hideProgressBar: true,
       });
     }
-    if (price > maxPrice && !noEdit) {
+    if (price > maxPrice && !noEdit && !userId) {
       toast("You've Paid too much!", {
         type: "warning",
         autoClose: 2000,
         hideProgressBar: true,
       });
     }
-  }, [foodEntries, maxCalories, calories, price, noEdit]);
+  }, [foodEntries, maxCalories, calories, price, noEdit, userId]);
 
   return (
     <div className="bg-purple-300 rounded flex flex-col p-2 w-80 md:w-96">
@@ -105,7 +107,10 @@ const FoodEntryList = ({
         />
       )}
       {showMaxCaloryMenu && (
-        <MaxCaloriesModal onClose={() => setShowMaxCaloryMenu(false)} />
+        <MaxCaloriesModal
+          userId={userId}
+          onClose={() => setShowMaxCaloryMenu(false)}
+        />
       )}
     </div>
   );

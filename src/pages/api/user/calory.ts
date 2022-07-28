@@ -3,16 +3,21 @@ import { unstable_getServerSession as getServerSession } from "next-auth";
 import { authOptions as nextAuthOptions } from "../auth/[...nextauth]";
 import { prisma } from "../../../server/db/client";
 import { setToMidnight } from "../../../utils/date";
+import { isAdmin } from "../../../server/services/admin";
 
 const calory = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, nextAuthOptions);
 
   if (session) {
     if (req.method === "POST") {
-      const { maxCalories: newMaxCalories } = req.body;
+      const { maxCalories: newMaxCalories, userId } = req.body;
+      if (userId && !isAdmin(session.user?.id)) {
+        res.status(403).send("Forbidden");
+        return;
+      }
       await prisma.user.update({
         where: {
-          id: session.user?.id,
+          id: userId || session.user?.id,
         },
         data: {
           maxCalories: newMaxCalories,
@@ -20,9 +25,14 @@ const calory = async (req: NextApiRequest, res: NextApiResponse) => {
       });
       res.status(201).send({ success: true });
     } else if (req.method === "GET") {
+      const userId = req.query.userId as string;
+      if (userId && !isAdmin(session.user?.id)) {
+        res.status(403).send("Forbidden");
+        return;
+      }
       const user = await prisma.user.findUnique({
         where: {
-          id: session.user?.id,
+          id: userId || session.user?.id,
         },
       });
       res.send({

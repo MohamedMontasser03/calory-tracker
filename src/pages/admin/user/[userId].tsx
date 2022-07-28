@@ -32,7 +32,7 @@ const Admin: NextPage<AdminProps> = ({
     endDate: new Date(),
     key: "selection",
   });
-  const { userId: queryUserId } = useRouter().query;
+  const { userId: queryUserId } = useRouter().query as Record<string, string>;
 
   const {
     data: foodEntriesData,
@@ -49,6 +49,17 @@ const Admin: NextPage<AdminProps> = ({
     {
       enabled: user !== null || dateRange.key === "selection",
       initialData: { foodEntries },
+      staleTime: 1000,
+    }
+  );
+  const { data: maxCaloriesData, isLoading: loadingMaxCalories } = useQuery(
+    ["maxCalories", queryUserId],
+    async () => {
+      const res = await fetch(`/api/user/calory?userId=${queryUserId}`);
+      return await res.json();
+    },
+    {
+      initialData: { maxCalories: user.maxCalories },
       staleTime: 1000,
     }
   );
@@ -101,14 +112,15 @@ const Admin: NextPage<AdminProps> = ({
               showMonthAndYearPickers={false}
             />
           </div>
-          {loadingFoodEntries ? (
+          {loadingFoodEntries || loadingMaxCalories ? (
             <div className="text-gray-700">Loading...</div>
           ) : (
             <FoodEntryList
               foodEntries={foodEntriesData.foodEntries}
-              maxCalories={queryUserData.maxCalories}
+              maxCalories={maxCaloriesData.maxCalories}
               isFullDate={true}
               noEdit={false}
+              userId={queryUserId}
             />
           )}
         </div>

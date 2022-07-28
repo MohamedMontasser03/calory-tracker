@@ -1,25 +1,27 @@
 import React from "react";
 import { ErrorMessage, Formik } from "formik";
-import { z } from "zod";
+import { string, z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 type MaxCaloriesModalProps = {
   onClose?: () => void;
+  userId?: string;
 };
 
-const MaxCaloriesModal = ({ onClose }: MaxCaloriesModalProps) => {
+const MaxCaloriesModal = ({ onClose, userId }: MaxCaloriesModalProps) => {
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["maxCalories"],
     async ({ values }: { values: Record<string, string | number> }) => {
-      const res = await fetch("/api/user/calory", {
+      const res = await fetch(`/api/user/calory`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           maxCalories: values.maxCalories,
+          userId,
         }),
       });
       return await res.json();
@@ -39,14 +41,16 @@ const MaxCaloriesModal = ({ onClose }: MaxCaloriesModalProps) => {
       <Formik
         initialValues={{
           maxCalories:
-            queryClient.getQueryData<any>(["maxCalories"])?.maxCalories || 2100,
+            queryClient.getQueryData<any>(
+              ["maxCalories", userId].filter((v) => v) // remove userId if undefined
+            )?.maxCalories || 2100,
         }}
         onSubmit={async (values, { setSubmitting }) => {
           setSubmitting(true);
           mutate({ values });
           setSubmitting(false);
           onClose?.();
-          toast(`Max Cloreis Changed Successfully`, {
+          toast(`Max Calories Changed Successfully`, {
             type: "success",
             autoClose: 2000,
             hideProgressBar: true,
