@@ -54,3 +54,9 @@ export const getDateTimeInputFromDate = (date: Date): string => {
   const timeString = date.toTimeString().split(" ")[0];
   return `${year}-${month}-${day}T${timeString}`;
 };
+
+export const getTimeInputFromDate = (date: Date): string => {
+  return date.toLocaleTimeString([], {
+    hourCycle: "h23",
+  });
+};

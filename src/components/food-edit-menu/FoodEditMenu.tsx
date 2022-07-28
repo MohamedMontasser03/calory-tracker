@@ -9,7 +9,9 @@ import {
   getDateFromDateTimeInput,
   getDateFromTimeInput,
   getDateTimeInputFromDate,
+  getTimeInputFromDate,
 } from "../../utils/date";
+import { getErrorsFromValidation } from "../../utils/validation";
 
 type FoodEditMenuProps = {
   foodEntry?: FoodEntry | null;
@@ -33,9 +35,7 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
             ...(foodEntry || {}),
             ...values,
             userId: userId || data?.user?.id,
-            date: (userId ? getDateFromDateTimeInput : getDateFromTimeInput)(
-              (values.date as string) || ""
-            ),
+            date: valueToDate((values.date as string) || ""),
           },
         }),
       });
@@ -49,7 +49,11 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
     }
   );
 
-  const initialDate = new Date(foodEntry ? foodEntry.date : Date());
+  const isEditing = !!foodEntry;
+  const isAdmin = !!userId;
+  const initialDate = new Date(isEditing ? foodEntry.date : Date());
+  const dateToValue = isAdmin ? getDateTimeInputFromDate : getTimeInputFromDate;
+  const valueToDate = isAdmin ? getDateFromDateTimeInput : getDateFromTimeInput;
   return (
     <div
       className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"
@@ -59,28 +63,29 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
         initialValues={{
           name: foodEntry?.name || "",
           calories: foodEntry?.calories || "",
-          date: userId
-            ? getDateTimeInputFromDate(initialDate)
-            : initialDate.toLocaleTimeString([], {
-                hourCycle: "h23",
-              }),
+          date: dateToValue(initialDate),
           price: foodEntry?.price || "",
         }}
         onSubmit={async (values, { setSubmitting }) => {
           setSubmitting(true);
-          mutate({
-            values,
-          });
-          setSubmitting(false);
-          onClose?.();
-          toast(`Food ${foodEntry ? "Edited" : "Added"} Successfully`, {
-            type: "success",
-            autoClose: 2000,
-            hideProgressBar: true,
-          });
+          mutate(
+            {
+              values,
+            },
+            {
+              onSuccess: () => {
+                setSubmitting(false);
+                onClose?.();
+                toast(`Food ${foodEntry ? "Edited" : "Added"} Successfully`, {
+                  type: "success",
+                  autoClose: 2000,
+                  hideProgressBar: true,
+                });
+              },
+            }
+          );
         }}
         validate={(values) => {
-          const errors: Record<string, string> = {};
           const validators = {
             name: z
               .string({
@@ -108,19 +113,10 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
                 invalid_type_error: "Date is required",
               })
               .max(new Date(), "Date must be in the past")
-              .safeParse(
-                (userId ? getDateFromDateTimeInput : getDateFromTimeInput)(
-                  (values.date as string) || ""
-                )
-              ),
+              .safeParse(valueToDate((values.date as string) || "")),
           };
 
-          Object.entries(validators).forEach(([key, val]) => {
-            if (!val.success) {
-              errors[key] = val.error.formErrors.formErrors[0] || "";
-            }
-          });
-          return errors;
+          return getErrorsFromValidation(validators);
         }}
       >
         {({ values, handleChange, handleSubmit, isSubmitting }) => (
@@ -186,7 +182,7 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
               disabled={isSubmitting}
               className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
             >
-              Add Food Entry
+              {foodEntry ? "Edit" : "Add"} Food Entry
             </button>
           </form>
         )}
