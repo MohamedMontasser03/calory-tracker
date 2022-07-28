@@ -1,16 +1,18 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import {
-  Session,
-  unstable_getServerSession as getServerSession,
-} from "next-auth";
+import { unstable_getServerSession as getServerSession } from "next-auth";
 import { authOptions as nextAuthOptions } from "../auth/[...nextauth]";
-import { prisma } from "../../../server/db/client";
 import { FoodEntry } from "@prisma/client";
+import {
+  addFoodEntry,
+  deleteFoodEntries,
+  listFoodEntries,
+  updateFoodEntry,
+} from "../../../server/services/foodEntries";
 
 const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, nextAuthOptions);
 
-  if (session) {
+  if (session && session.user && session.user.id) {
     if (req.method === "POST") {
       const { foodEntry } = req.body;
       const result = await addFoodEntry(foodEntry);
@@ -21,7 +23,7 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(201).send(result);
     } else if (req.method === "GET") {
       const { sd = Date(), ed = Date() } = req.query as Record<string, string>;
-      const foodEntries = await listFoodEntries(session, sd, ed);
+      const foodEntries = await listFoodEntries(session.user.id, sd, ed);
       res.send(foodEntries);
     } else if (req.method === "DELETE") {
       const {
@@ -39,47 +41,6 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
         "You must be signed in to view the protected content on this page.",
     });
   }
-};
-
-const addFoodEntry = async (foodEntry: FoodEntry) => {
-  const result = await prisma.foodEntry.create({
-    data: {
-      ...foodEntry,
-    },
-  });
-  return result;
-};
-const updateFoodEntry = async (foodEntry: FoodEntry) => {
-  const result = await prisma.foodEntry.update({
-    where: {
-      id: foodEntry.id,
-    },
-    data: {
-      ...foodEntry,
-    },
-  });
-  return result;
-};
-
-const listFoodEntries = async (session: Session, sd: string, ed: string) => {
-  const foodEntries = await prisma.foodEntry.findMany({
-    where: {
-      userId: session.user?.id,
-      date: {
-        gte: new Date(new Date(sd).setHours(0, 0, 0, 0)),
-        lte: new Date(new Date(ed).setHours(23, 59, 59, 999)),
-      },
-    },
-  });
-  return foodEntries;
-};
-
-const deleteFoodEntries = async (entryId: string) => {
-  await prisma.foodEntry.delete({
-    where: {
-      id: entryId,
-    },
-  });
 };
 
 export default foodEntry;

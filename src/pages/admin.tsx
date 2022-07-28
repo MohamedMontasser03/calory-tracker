@@ -41,7 +41,7 @@ const Admin: NextPage<AdminProps> = ({
 
       <main className="p-4 text-gray-700">
         <h1 className="flex justify-center text-2xl md:text-4xl leading-normal font-extrabold mb-4">
-          Calory <span className="text-purple-300">Tracker</span> App
+          Calory <span className="text-purple-300">Tracker/Admin</span> App
         </h1>
         <div className="mt-8">
           <h2>This Week&rsquo;s Stats </h2>

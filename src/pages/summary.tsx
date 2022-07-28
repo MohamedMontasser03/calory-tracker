@@ -55,7 +55,7 @@ const Summary: NextPage<SummaryProps> = ({
   useEffect(() => {
     refetch();
   }, [dateRange, refetch]);
-  console.log(daysWithExcessCalories);
+
   return (
     <>
       <Head>
