@@ -73,7 +73,7 @@ const Admin: NextPage<AdminProps> = ({
         </h1>
         <div className="flex items-center justify-center gap-2 mb-4">
           <h2 className="leading-normal font-extrabold text-gray-700">
-            {queryUserData.name}
+            Editing: {queryUserData.name}
           </h2>
           <Image
             className="rounded-full"
