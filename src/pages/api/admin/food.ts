@@ -14,7 +14,7 @@ import { listFoodEntries } from "../../../server/services/foodEntries";
 const users = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, nextAuthOptions);
 
-  if (session && (await isAdmin(session.user?.id))) {
+  if (!session || !(await isAdmin(session.user?.id))) {
     return res.send({
       error:
         "You must be signed in as Admin to view the protected content on this page.",

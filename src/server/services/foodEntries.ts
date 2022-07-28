@@ -86,8 +86,8 @@ export const getDaysWithExcessCalories = async (
   const caloriesInDays = foodEntries.reduce<Record<string, number>>(
     (acc, entry) => ({
       ...acc,
-      [setToMidnight(entry.date).toString()]:
-        (acc[setToMidnight(entry.date).toString()] || 0) + entry.calories,
+      [setToMidnight(entry.date).toLocaleString()]:
+        (acc[setToMidnight(entry.date).toLocaleString()] || 0) + entry.calories,
     }),
     {}
   );

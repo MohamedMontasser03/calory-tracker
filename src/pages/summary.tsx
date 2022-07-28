@@ -46,7 +46,7 @@ const Summary: NextPage<SummaryProps> = ({
     ["sumFoodEntries"],
     async () => {
       const res = await fetch(
-        `/api/user/food?sd=${dateRange.startDate.toString()}&ed=${dateRange.endDate.toString()}`
+        `/api/user/food?sd=${dateRange.startDate.toLocaleString()}&ed=${dateRange.endDate.toLocaleString()}`
       );
       return await res.json();
     },
@@ -59,7 +59,6 @@ const Summary: NextPage<SummaryProps> = ({
   useEffect(() => {
     refetch();
   }, [dateRange, refetch]);
-
   return (
     <>
       <Head>
@@ -81,8 +80,8 @@ const Summary: NextPage<SummaryProps> = ({
               maxDate={new Date()}
               onChange={(date) =>
                 setDateRange({
-                  startDate: date.selection!.startDate!,
-                  endDate: date.selection!.endDate!,
+                  startDate: date.selection?.startDate || new Date(),
+                  endDate: date.selection?.endDate || new Date(),
                   key: "selection",
                 })
               }
@@ -152,7 +151,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       user: session.user,
       foodEntries: JSON.parse(JSON.stringify(foodEntries)),
       daysWithExcessCalories,
-      earliestDate: earliestDate?.toString(),
+      earliestDate: earliestDate?.toLocaleString(),
     },
   };
 };

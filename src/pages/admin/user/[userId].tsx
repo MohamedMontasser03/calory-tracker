@@ -45,7 +45,7 @@ const Admin: NextPage<AdminProps> = ({
     ["sumFoodEntries", queryUserId],
     async () => {
       const res = await fetch(
-        `/api/admin/food?userId=${queryUserId}&sd=${dateRange.startDate.toString()}&ed=${dateRange.endDate.toString()}`
+        `/api/admin/food?userId=${queryUserId}&sd=${dateRange.startDate.toLocaleString()}&ed=${dateRange.endDate.toLocaleString()}`
       );
       return await res.json();
     },
@@ -157,11 +157,11 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     ctx.res.end();
     return { props: {} };
   }
-  const foodEntries = await listFoodEntries(session.user.id, Date(), Date());
+  const foodEntries = await listFoodEntries(queryUserId, Date(), Date());
   return {
     props: {
       user: session.user,
-      earliestDate: (await getEarliestDate(queryUserId))?.toString(),
+      earliestDate: (await getEarliestDate(queryUserId))?.toLocaleString(),
       foodEntries: JSON.parse(JSON.stringify(foodEntries)),
       queryUserData: await getUserData(queryUserId),
     },
