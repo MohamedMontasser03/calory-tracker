@@ -1,18 +1,33 @@
-import { FoodEntry } from "@prisma/client";
-import { useQuery } from "@tanstack/react-query";
 import type { GetServerSideProps, NextPage } from "next";
-import { User } from "next-auth";
+import { User } from "@prisma/client";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
-import FoodEntryList from "../components/food-entry-list/FoodEntryList";
 import Header from "../components/header/Header";
+import { UserList } from "../components/user-list/UserList";
 import { prisma } from "../server/db/client";
+import {
+  getAvgWeekCalories,
+  getNumOfFoodEntries,
+  getUserCount,
+  getUsers,
+} from "../server/services/admin";
+import { removeDaysFromDate } from "../utils/date";
 
 type AdminProps = {
   user: User;
+  AvgCalories: number;
+  numOfEntryComparison: number[];
+  userList: User[];
+  numOfPages: number;
 };
 
-const Admin: NextPage<AdminProps> = ({ user }) => {
+const Admin: NextPage<AdminProps> = ({
+  user,
+  AvgCalories,
+  numOfEntryComparison,
+  userList,
+  numOfPages,
+}) => {
   return (
     <>
       <Head>
@@ -23,10 +38,24 @@ const Admin: NextPage<AdminProps> = ({ user }) => {
 
       <Header user={user} />
 
-      <main className="container mx-auto flex flex-col items-center h-screen p-4 text-white">
-        <h1 className="text-2xl md:text-4xl leading-normal font-extrabold mb-4 text-gray-700">
+      <main className="p-4 text-gray-700">
+        <h1 className="flex justify-center text-2xl md:text-4xl leading-normal font-extrabold mb-4">
           Calory <span className="text-purple-300">Tracker</span> App
         </h1>
+        <div className="mt-8">
+          <h2>This Week&rsquo;s Stats </h2>
+          <p>Average Calories Added This Week: {AvgCalories}</p>
+          <p>Number of Food Entries This Week: {numOfEntryComparison[1]}</p>
+          <p>Number of Food Entries Last Week: {numOfEntryComparison[0]}</p>
+        </div>
+        <div className="mt-8">
+          <h2>User List</h2>
+          <UserList
+            userList={userList}
+            numOfPages={numOfPages}
+            currentPage={0}
+          />
+        </div>
       </main>
     </>
   );
@@ -59,6 +88,13 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   return {
     props: {
       user: session.user,
+      AvgCalories: await getAvgWeekCalories(),
+      numOfEntryComparison: await Promise.all([
+        getNumOfFoodEntries(removeDaysFromDate(new Date(), 7)),
+        getNumOfFoodEntries(new Date()),
+      ]),
+      userList: await getUsers(0, 10),
+      numOfPages: Math.ceil((await getUserCount()) / 10),
     },
   };
 };
