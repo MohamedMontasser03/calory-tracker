@@ -22,3 +22,9 @@
     yarn build
     yarn start
     ```
+
+## Todo List
+
+    - [ ] Add try-catch to all controllers and services
+    - [ ] Add tests
+    - [ ] Add zod validation to all controllers and services
