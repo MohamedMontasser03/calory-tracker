@@ -5,16 +5,17 @@ import Head from "next/head";
 import { prisma } from "../../../server/db/client";
 import Header from "../../../components/header/Header";
 import { isAdmin } from "../../../server/services/admin";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateRange } from "react-date-range";
 import FoodEntryList from "../../../components/food-entry-list/FoodEntryList";
 import { getEarliestDate } from "../../../server/services/foodEntries";
 import { doesUserExist } from "../../../server/services/user";
+import { useRouter } from "next/router";
+import { useQuery } from "@tanstack/react-query";
 
 type AdminProps = {
   user: User;
   earliestDate: string;
-
   foodEntries: FoodEntry[];
 };
 
@@ -24,6 +25,30 @@ const Admin: NextPage<AdminProps> = ({ user, earliestDate, foodEntries }) => {
     endDate: new Date(),
     key: "selection",
   });
+  const { userId: queryUserId } = useRouter().query;
+
+  const {
+    data: foodEntriesData,
+    isLoading: loadingFoodEntries,
+    refetch,
+  } = useQuery(
+    ["sumFoodEntries", queryUserId],
+    async () => {
+      const res = await fetch(
+        `/api/admin/food?userId=${queryUserId}&sd=${dateRange.startDate.toString()}&ed=${dateRange.endDate.toString()}`
+      );
+      return await res.json();
+    },
+    {
+      enabled: user !== null || dateRange.key === "selection",
+      initialData: { foodEntries },
+      staleTime: 1000,
+    }
+  );
+
+  useEffect(() => {
+    refetch();
+  }, [dateRange, refetch]);
 
   return (
     <>
@@ -56,16 +81,16 @@ const Admin: NextPage<AdminProps> = ({ user, earliestDate, foodEntries }) => {
               showMonthAndYearPickers={false}
             />
           </div>
-          {/* {loadingFoodEntries ? (
+          {loadingFoodEntries ? (
             <div className="text-gray-700">Loading...</div>
-          ) : ( */}
-          <FoodEntryList
-            foodEntries={foodEntries}
-            maxCalories={0}
-            isFullDate={true}
-            noEdit={true}
-          />
-          {/* )} */}
+          ) : (
+            <FoodEntryList
+              foodEntries={foodEntriesData.foodEntries}
+              maxCalories={0}
+              isFullDate={true}
+              noEdit={true}
+            />
+          )}
         </div>
       </main>
     </>
