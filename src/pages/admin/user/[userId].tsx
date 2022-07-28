@@ -78,7 +78,7 @@ const Admin: NextPage<AdminProps> = ({
 
       <Header user={user} />
 
-      <main className="container mx-auto flex flex-col items-center h-screen p-4 text-white">
+      <main className="container mx-auto flex flex-col items-center mb-4 p-4 text-white">
         <h1 className="flex justify-center text-2xl md:text-4xl leading-normal font-extrabold mb-4 text-gray-700">
           Calory <span className="text-purple-300">Tracker/Admin</span> App
         </h1>

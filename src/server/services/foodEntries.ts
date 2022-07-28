@@ -34,6 +34,9 @@ export const listFoodEntries = async (
         lte: new Date(new Date(ed).setHours(23, 59, 59, 999)),
       },
     },
+    orderBy: {
+      date: "asc",
+    },
   });
   return foodEntries;
 };

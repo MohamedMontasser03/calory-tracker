@@ -5,25 +5,25 @@ import { z } from "zod";
 import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import {
+  getDateFromDateTimeInput,
+  getDateFromTimeInput,
+  getDateTimeInputFromDate,
+} from "../../utils/date";
 
 type FoodEditMenuProps = {
   foodEntry?: FoodEntry | null;
+  userId?: string;
   onClose?: () => void;
 };
 
-const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
+const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
   const { data } = useSession();
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["foodEntries"],
-    async ({
-      values,
-      date,
-    }: {
-      values: Record<string, string | number>;
-      date: number;
-    }) => {
-      const res = await fetch("/api/user/food", {
+    async ({ values }: { values: Record<string, string | number> }) => {
+      const res = await fetch(`/api/user/food`, {
         method: foodEntry ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,8 +32,10 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
           foodEntry: {
             ...(foodEntry || {}),
             ...values,
-            userId: data?.user?.id,
-            date: new Date(date),
+            userId: userId || data?.user?.id,
+            date: (userId ? getDateFromDateTimeInput : getDateFromTimeInput)(
+              (values.date as string) || ""
+            ),
           },
         }),
       });
@@ -47,6 +49,7 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
     }
   );
 
+  const initialDate = new Date(foodEntry ? foodEntry.date : Date());
   return (
     <div
       className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"
@@ -56,22 +59,17 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
         initialValues={{
           name: foodEntry?.name || "",
           calories: foodEntry?.calories || "",
-          date: new Date(
-            foodEntry ? foodEntry.date : Date()
-          ).toLocaleTimeString([], {
-            hourCycle: "h23",
-          }),
+          date: userId
+            ? getDateTimeInputFromDate(initialDate)
+            : initialDate.toLocaleTimeString([], {
+                hourCycle: "h23",
+              }),
           price: foodEntry?.price || "",
         }}
         onSubmit={async (values, { setSubmitting }) => {
           setSubmitting(true);
-          const [hours, mins, secs] = values.date
-            ?.split(":")
-            .map(Number) as number[];
-          const date = new Date().setHours(hours || 0, mins || 0, secs || 0);
           mutate({
             values,
-            date,
           });
           setSubmitting(false);
           onClose?.();
@@ -83,10 +81,6 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
         }}
         validate={(values) => {
           const errors: Record<string, string> = {};
-          const [hours, mins, secs] = values.date
-            ?.split(":")
-            .map(Number) as number[];
-          const date = new Date().setHours(hours || 0, mins || 0, secs || 0);
           const validators = {
             name: z
               .string({
@@ -114,8 +108,13 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
                 invalid_type_error: "Date is required",
               })
               .max(new Date(), "Date must be in the past")
-              .safeParse(new Date(date)),
+              .safeParse(
+                (userId ? getDateFromDateTimeInput : getDateFromTimeInput)(
+                  (values.date as string) || ""
+                )
+              ),
           };
+
           Object.entries(validators).forEach(([key, val]) => {
             if (!val.success) {
               errors[key] = val.error.formErrors.formErrors[0] || "";
@@ -170,7 +169,7 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
               component="div"
             />
             <input
-              type="time"
+              type={userId ? "datetime-local" : "time"}
               className="bg-purple-400 rounded flex flex-col p-2 placeholder:text-white"
               placeholder="Enter date"
               name="date"

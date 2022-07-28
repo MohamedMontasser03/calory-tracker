@@ -25,3 +25,32 @@ export const removeDaysFromDate = (date: Date, days: number): Date => {
   newDate.setDate(newDate.getDate() - days);
   return newDate;
 };
+
+export const getDateFromTimeInput = (timeInput: string): Date => {
+  const [hours, mins, secs] = timeInput.split(":").map(Number) as number[];
+  const date = new Date().setHours(hours || 0, mins || 0, secs || 0);
+
+  return new Date(date);
+};
+
+export const getDateFromDateTimeInput = (dateTimeInput: string): Date => {
+  const [date, time] = dateTimeInput.split("T");
+  const dateObj = new Date(date || "");
+  const timeObj = getDateFromTimeInput(time || "");
+  dateObj.setHours(timeObj.getHours());
+  dateObj.setMinutes(timeObj.getMinutes());
+  dateObj.setSeconds(timeObj.getSeconds());
+  return dateObj;
+};
+
+export const getDateTimeInputFromDate = (date: Date): string => {
+  const [month, day, year] = date
+    .toLocaleDateString([], {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+    .split("/");
+  const timeString = date.toTimeString().split(" ")[0];
+  return `${year}-${month}-${day}T${timeString}`;
+};

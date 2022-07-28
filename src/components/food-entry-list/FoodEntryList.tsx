@@ -100,6 +100,7 @@ const FoodEntryList = ({
       {showEditMenu && (
         <FoodEditMenu
           foodEntry={isUpdating}
+          userId={userId}
           onClose={() => {
             setShowEditMenu(false);
             setIsUpdating(null);
