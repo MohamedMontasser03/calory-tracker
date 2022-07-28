@@ -39,7 +39,7 @@ const Summary: NextPage<SummaryProps> = ({
     isLoading: loadingFoodEntries,
     refetch,
   } = useQuery(
-    ["foodEntries"],
+    ["sumFoodEntries"],
     async () => {
       const res = await fetch(
         `/api/user/food?sd=${dateRange.startDate.toString()}&ed=${dateRange.endDate.toString()}`

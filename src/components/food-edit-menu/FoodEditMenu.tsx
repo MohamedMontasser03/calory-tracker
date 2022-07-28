@@ -42,6 +42,7 @@ const FoodEditMenu = ({ foodEntry, onClose }: FoodEditMenuProps) => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["foodEntries"]);
+        queryClient.invalidateQueries(["sumFoodEntries"]);
       },
     }
   );

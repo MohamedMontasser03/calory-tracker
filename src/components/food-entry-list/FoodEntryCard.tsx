@@ -33,6 +33,7 @@ const FoodEntryCard = ({
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["foodEntries"]);
+        queryClient.invalidateQueries(["sumFoodEntries"]);
       },
     }
   );
