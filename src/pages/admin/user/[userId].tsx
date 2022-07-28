@@ -8,7 +8,10 @@ import { isAdmin } from "../../../server/services/admin";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-date-range";
 import FoodEntryList from "../../../components/food-entry-list/FoodEntryList";
-import { getEarliestDate } from "../../../server/services/foodEntries";
+import {
+  getEarliestDate,
+  listFoodEntries,
+} from "../../../server/services/foodEntries";
 import { doesUserExist, getUserData } from "../../../server/services/user";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
@@ -154,15 +157,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     ctx.res.end();
     return { props: {} };
   }
-  const foodEntries = await prisma.foodEntry.findMany({
-    where: {
-      userId: queryUserId,
-      date: {
-        gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        lte: new Date(new Date().setHours(23, 59, 59, 999)),
-      },
-    },
-  });
+  const foodEntries = await listFoodEntries(session.user.id, Date(), Date());
   return {
     props: {
       user: session.user,

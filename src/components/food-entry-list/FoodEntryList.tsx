@@ -32,6 +32,7 @@ const FoodEntryList = ({
     0
   );
   const maxPrice = 1000;
+  const isAdmin = !!userId;
 
   const onUpdate = (foodEntry: FoodEntry) => {
     setIsUpdating(foodEntry);
@@ -39,21 +40,29 @@ const FoodEntryList = ({
   };
 
   useEffect(() => {
-    if (calories > maxCalories && !noEdit && !userId) {
-      toast("You've consumed too many calories!", {
+    if (calories > maxCalories && !noEdit && !isAdmin) {
+      const Id = toast("You've consumed too many calories!", {
         type: "warning",
         autoClose: 2000,
         hideProgressBar: true,
       });
+
+      return () => {
+        toast.dismiss(Id);
+      };
     }
-    if (price > maxPrice && !noEdit && !userId) {
-      toast("You've Paid too much!", {
+    if (price > maxPrice && !noEdit && !isAdmin) {
+      const Id = toast("You've Paid too much!", {
         type: "warning",
         autoClose: 2000,
         hideProgressBar: true,
       });
+
+      return () => {
+        toast.dismiss(Id);
+      };
     }
-  }, [foodEntries, maxCalories, calories, price, noEdit, userId]);
+  }, [foodEntries, maxCalories, calories, noEdit, isAdmin, price]);
 
   return (
     <div className="bg-purple-300 rounded flex flex-col p-2 w-80 md:w-96">

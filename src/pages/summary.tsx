@@ -14,6 +14,10 @@ import {
 import FoodEntryList from "../components/food-entry-list/FoodEntryList";
 import Header from "../components/header/Header";
 import { prisma } from "../server/db/client";
+import {
+  getDaysWithExcessCalories,
+  listFoodEntries,
+} from "../server/services/foodEntries";
 import { setToMidnight, toLocaleDateString } from "../utils/date";
 
 type SummaryProps = {
@@ -122,7 +126,7 @@ export default Summary;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getSession(ctx);
-  if (!session) {
+  if (!session || !session.user || !session.user.id) {
     ctx.res.writeHead(302, {
       Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
     });
@@ -133,15 +137,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     where: { id: session.user?.id },
     select: { maxCalories: true, admin: true },
   });
-  const foodEntries = await prisma.foodEntry.findMany({
-    where: {
-      userId: session.user?.id,
-      date: {
-        gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        lte: new Date(new Date().setHours(23, 59, 59, 999)),
-      },
-    },
-  });
+  const foodEntries = await listFoodEntries(session.user.id, Date(), Date());
   if (userData?.admin) {
     ctx.res.writeHead(302, {
       Location: "/admin",
@@ -159,35 +155,4 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       earliestDate: earliestDate?.toString(),
     },
   };
-};
-
-const getDaysWithExcessCalories = async (
-  userId: string,
-  maxCalories: number
-) => {
-  const foodEntries = await prisma.foodEntry.findMany({
-    where: {
-      userId,
-    },
-    select: {
-      date: true,
-      calories: true,
-    },
-    orderBy: {
-      date: "asc",
-    },
-  });
-  const earliestDate = foodEntries[0]?.date;
-  const caloriesInDays = foodEntries.reduce<Record<string, number>>(
-    (acc, entry) => ({
-      ...acc,
-      [setToMidnight(entry.date).toString()]:
-        (acc[setToMidnight(entry.date).toString()] || 0) + entry.calories,
-    }),
-    {}
-  );
-  const daysWithExcessCalories = Object.keys(caloriesInDays).filter(
-    (day) => (caloriesInDays[day] || 0) > maxCalories
-  );
-  return { daysWithExcessCalories, earliestDate };
 };

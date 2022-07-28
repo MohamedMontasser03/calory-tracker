@@ -1,5 +1,6 @@
 import { FoodEntry } from "@prisma/client";
 import { prisma } from "../../server/db/client";
+import { setToMidnight } from "../../utils/date";
 
 export const addFoodEntry = async (foodEntry: FoodEntry) => {
   const result = await prisma.foodEntry.create({
@@ -63,4 +64,35 @@ export const getEarliestDate = async (userId: string) => {
   });
   const earliestDate = foodEntry?.date;
   return earliestDate;
+};
+
+export const getDaysWithExcessCalories = async (
+  userId: string,
+  maxCalories: number
+) => {
+  const foodEntries = await prisma.foodEntry.findMany({
+    where: {
+      userId,
+    },
+    select: {
+      date: true,
+      calories: true,
+    },
+    orderBy: {
+      date: "asc",
+    },
+  });
+  const earliestDate = foodEntries[0]?.date;
+  const caloriesInDays = foodEntries.reduce<Record<string, number>>(
+    (acc, entry) => ({
+      ...acc,
+      [setToMidnight(entry.date).toString()]:
+        (acc[setToMidnight(entry.date).toString()] || 0) + entry.calories,
+    }),
+    {}
+  );
+  const daysWithExcessCalories = Object.keys(caloriesInDays).filter(
+    (day) => (caloriesInDays[day] || 0) > maxCalories
+  );
+  return { daysWithExcessCalories, earliestDate };
 };

@@ -18,3 +18,29 @@ export const getUserData = async (userId: string) => {
   });
   return user;
 };
+
+export const getUserMaxCalories = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      maxCalories: true,
+    },
+  });
+  return user?.maxCalories;
+};
+
+export const setUserMaxCalories = async (
+  userId: string,
+  maxCalories: number
+) => {
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      maxCalories,
+    },
+  });
+};

@@ -8,6 +8,8 @@ import Link from "next/link";
 import FoodEntryList from "../components/food-entry-list/FoodEntryList";
 import Header from "../components/header/Header";
 import { prisma } from "../server/db/client";
+import { listFoodEntries } from "../server/services/foodEntries";
+import { getUserData } from "../server/services/user";
 
 type HomeProps = {
   user: User;
@@ -76,26 +78,15 @@ export default Home;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getSession(ctx);
-  if (!session) {
+  if (!session || !session.user || !session.user.id) {
     ctx.res.writeHead(302, {
       Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
     });
     ctx.res.end();
     return { props: {} };
   }
-  const foodEntries = await prisma.foodEntry.findMany({
-    where: {
-      userId: session.user?.id,
-      date: {
-        gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        lte: new Date(new Date().setHours(23, 59, 59, 999)),
-      },
-    },
-  });
-  const userData = await prisma.user.findUnique({
-    where: { id: session.user?.id },
-    select: { maxCalories: true, admin: true },
-  });
+  const foodEntries = await listFoodEntries(session.user.id, Date(), Date());
+  const userData = await getUserData(session.user.id);
   if (userData?.admin) {
     ctx.res.writeHead(302, {
       Location: "/admin",
