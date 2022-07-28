@@ -16,7 +16,11 @@ export const getUsers = async (
 };
 
 export const getUserCount = async (): Promise<number> => {
-  const count = await prisma.user.count();
+  const count = await prisma.user.count({
+    where: {
+      admin: false,
+    },
+  });
   return count;
 };
 
@@ -48,4 +52,14 @@ export const getNumOfFoodEntries = async (endOfWeek: Date): Promise<number> => {
     },
   });
   return foodEntriesCount;
+};
+
+export const isAdmin = async (userId?: string): Promise<boolean> => {
+  if (!userId) return false;
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+  return user?.admin || false;
 };

@@ -4,6 +4,7 @@ import { getSession } from "next-auth/react";
 import Head from "next/head";
 import { prisma } from "../../../server/db/client";
 import Header from "../../../components/header/Header";
+import { isAdmin } from "../../../server/services/admin";
 
 type AdminProps = {
   user: User;
@@ -35,18 +36,14 @@ export default Admin;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getSession(ctx);
-  if (!session) {
+  if (!session || !session.user || !session.user.id) {
     ctx.res.writeHead(302, {
       Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
     });
     ctx.res.end();
     return { props: {} };
   }
-  const userData = await prisma.user.findUnique({
-    where: { id: session.user?.id },
-    select: { admin: true },
-  });
-  if (!userData?.admin) {
+  if (!(await isAdmin(session.user?.id))) {
     ctx.res.writeHead(302, {
       Location: "/",
     });
