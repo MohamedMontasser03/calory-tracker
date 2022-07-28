@@ -39,7 +39,6 @@ const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
       staleTime: 1000,
     }
   );
-
   return (
     <>
       <Head>

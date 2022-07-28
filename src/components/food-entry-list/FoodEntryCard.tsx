@@ -1,6 +1,7 @@
 import { FoodEntry } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+import { quickFetch } from "../../utils/fetch";
 
 type FoodEntryCardProps = {
   foodEntry: FoodEntry;
@@ -18,18 +19,10 @@ const FoodEntryCard = ({
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["foodEntries"],
-    async () => {
-      const res = await fetch("/api/user/food", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          foodEntry,
-        }),
-      });
-      return await res.json();
-    },
+    () =>
+      quickFetch("/api/user/food", "DELETE", {
+        foodEntry,
+      }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["foodEntries"]);

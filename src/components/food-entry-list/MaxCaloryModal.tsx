@@ -3,6 +3,8 @@ import { ErrorMessage, Formik } from "formik";
 import { string, z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { quickFetch } from "../../utils/fetch";
+import { getErrorsFromValidation } from "../../utils/validation";
 
 type MaxCaloriesModalProps = {
   onClose?: () => void;
@@ -13,19 +15,11 @@ const MaxCaloriesModal = ({ onClose, userId }: MaxCaloriesModalProps) => {
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["maxCalories"],
-    async ({ values }: { values: Record<string, string | number> }) => {
-      const res = await fetch(`/api/user/calory`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          maxCalories: values.maxCalories,
-          userId,
-        }),
-      });
-      return await res.json();
-    },
+    ({ values }: { values: Record<string, string | number> }) =>
+      quickFetch(`/api/user/calory`, "POST", {
+        maxCalories: values.maxCalories,
+        userId,
+      }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["maxCalories"]);
@@ -41,23 +35,28 @@ const MaxCaloriesModal = ({ onClose, userId }: MaxCaloriesModalProps) => {
       <Formik
         initialValues={{
           maxCalories:
-            queryClient.getQueryData<any>(
+            queryClient.getQueryData<{ maxCalories: number }>(
               ["maxCalories", userId].filter((v) => v) // remove userId if undefined
             )?.maxCalories || 2100,
         }}
         onSubmit={async (values, { setSubmitting }) => {
           setSubmitting(true);
-          mutate({ values });
-          setSubmitting(false);
-          onClose?.();
-          toast(`Max Calories Changed Successfully`, {
-            type: "success",
-            autoClose: 2000,
-            hideProgressBar: true,
-          });
+          mutate(
+            { values },
+            {
+              onSuccess: () => {
+                setSubmitting(false);
+                onClose?.();
+                toast(`Max Calories Changed Successfully`, {
+                  type: "success",
+                  autoClose: 2000,
+                  hideProgressBar: true,
+                });
+              },
+            }
+          );
         }}
         validate={(values) => {
-          const errors: Record<string, string> = {};
           const validators = {
             maxCalories: z
               .number({
@@ -67,12 +66,8 @@ const MaxCaloriesModal = ({ onClose, userId }: MaxCaloriesModalProps) => {
               .positive("Calories must be positive")
               .safeParse(values.maxCalories),
           };
-          Object.entries(validators).forEach(([key, val]) => {
-            if (!val.success) {
-              errors[key] = val.error.formErrors.formErrors[0] || "";
-            }
-          });
-          return errors;
+
+          return getErrorsFromValidation(validators);
         }}
       >
         {({ values, handleChange, handleSubmit, isSubmitting }) => (
