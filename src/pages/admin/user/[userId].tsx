@@ -9,17 +9,24 @@ import { useEffect, useState } from "react";
 import { DateRange } from "react-date-range";
 import FoodEntryList from "../../../components/food-entry-list/FoodEntryList";
 import { getEarliestDate } from "../../../server/services/foodEntries";
-import { doesUserExist } from "../../../server/services/user";
+import { doesUserExist, getUserData } from "../../../server/services/user";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 
 type AdminProps = {
   user: User;
   earliestDate: string;
   foodEntries: FoodEntry[];
+  queryUserData: User;
 };
 
-const Admin: NextPage<AdminProps> = ({ user, earliestDate, foodEntries }) => {
+const Admin: NextPage<AdminProps> = ({
+  user,
+  earliestDate,
+  foodEntries,
+  queryUserData,
+}) => {
   const [dateRange, setDateRange] = useState({
     startDate: new Date(),
     endDate: new Date(),
@@ -64,6 +71,19 @@ const Admin: NextPage<AdminProps> = ({ user, earliestDate, foodEntries }) => {
         <h1 className="flex justify-center text-2xl md:text-4xl leading-normal font-extrabold mb-4 text-gray-700">
           Calory <span className="text-purple-300">Tracker/Admin</span> App
         </h1>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <h2 className="leading-normal font-extrabold text-gray-700">
+            {queryUserData.name}
+          </h2>
+          <Image
+            className="rounded-full"
+            src={queryUserData.image!}
+            alt={queryUserData.name!}
+            width={32}
+            height={32}
+          />
+        </div>
+
         <div className="flex gap-2 md:flex-row flex-col items-center">
           <div className="p-2 bg-blue-200 text-gray-700 rounded-sm">
             <DateRange
@@ -86,9 +106,9 @@ const Admin: NextPage<AdminProps> = ({ user, earliestDate, foodEntries }) => {
           ) : (
             <FoodEntryList
               foodEntries={foodEntriesData.foodEntries}
-              maxCalories={0}
+              maxCalories={queryUserData.maxCalories}
               isFullDate={true}
-              noEdit={true}
+              noEdit={false}
             />
           )}
         </div>
@@ -136,6 +156,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       user: session.user,
       earliestDate: (await getEarliestDate(queryUserId))?.toString(),
       foodEntries: JSON.parse(JSON.stringify(foodEntries)),
+      queryUserData: await getUserData(queryUserId),
     },
   };
 };
