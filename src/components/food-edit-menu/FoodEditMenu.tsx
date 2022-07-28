@@ -12,6 +12,7 @@ import {
   getTimeInputFromDate,
 } from "../../utils/date";
 import { getErrorsFromValidation } from "../../utils/validation";
+import { quickFetch } from "../../utils/fetch";
 
 type FoodEditMenuProps = {
   foodEntry?: FoodEntry | null;
@@ -24,23 +25,15 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["foodEntries"],
-    async ({ values }: { values: Record<string, string | number> }) => {
-      const res = await fetch(`/api/user/food`, {
-        method: foodEntry ? "PATCH" : "POST",
-        headers: {
-          "Content-Type": "application/json",
+    ({ values }: { values: Record<string, string | number> }) =>
+      quickFetch(`/api/user/food`, foodEntry ? "PATCH" : "POST", {
+        foodEntry: {
+          ...(foodEntry || {}),
+          ...values,
+          userId: userId || data?.user?.id,
+          date: valueToDate((values.date as string) || ""),
         },
-        body: JSON.stringify({
-          foodEntry: {
-            ...(foodEntry || {}),
-            ...values,
-            userId: userId || data?.user?.id,
-            date: valueToDate((values.date as string) || ""),
-          },
-        }),
-      });
-      return await res.json();
-    },
+      }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["foodEntries"]);
@@ -52,6 +45,7 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
   const isEditing = !!foodEntry;
   const isAdmin = !!userId;
   const initialDate = new Date(isEditing ? foodEntry.date : Date());
+  // make sure the date is only available for admins and only admins can set userId
   const dateToValue = isAdmin ? getDateTimeInputFromDate : getTimeInputFromDate;
   const valueToDate = isAdmin ? getDateFromDateTimeInput : getDateFromTimeInput;
   return (
@@ -165,7 +159,7 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
               component="div"
             />
             <input
-              type={userId ? "datetime-local" : "time"}
+              type={isAdmin ? "datetime-local" : "time"}
               className="bg-purple-400 rounded flex flex-col p-2 placeholder:text-white"
               placeholder="Enter date"
               name="date"
@@ -182,7 +176,7 @@ const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
               disabled={isSubmitting}
               className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
             >
-              {foodEntry ? "Edit" : "Add"} Food Entry
+              {isEditing ? "Edit" : "Add"} Food Entry
             </button>
           </form>
         )}
