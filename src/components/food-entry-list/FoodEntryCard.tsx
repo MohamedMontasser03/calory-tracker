@@ -5,9 +5,16 @@ import React from "react";
 type FoodEntryCardProps = {
   foodEntry: FoodEntry;
   onUpdate: (foodEntry: FoodEntry) => void;
+  isFullDate?: boolean;
+  noEdit?: boolean;
 };
 
-const FoodEntryCard = ({ foodEntry, onUpdate }: FoodEntryCardProps) => {
+const FoodEntryCard = ({
+  foodEntry,
+  onUpdate,
+  isFullDate = false,
+  noEdit = false,
+}: FoodEntryCardProps) => {
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["foodEntries"],
@@ -38,25 +45,32 @@ const FoodEntryCard = ({ foodEntry, onUpdate }: FoodEntryCardProps) => {
         <h2>Price: {foodEntry.price}$</h2>
         <h2>
           Date:{" "}
-          {new Date(foodEntry.date).toLocaleString("en", {
-            timeStyle: "short",
-          })}
+          {new Date(foodEntry.date).toLocaleString(
+            [],
+            !isFullDate
+              ? {
+                  timeStyle: "short",
+                }
+              : {}
+          )}
         </h2>
       </div>
-      <div className="flex flex-col justify-evenly">
-        <button
-          onClick={() => onUpdate(foodEntry)}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => mutate()}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
-        >
-          Delete
-        </button>
-      </div>
+      {!noEdit && (
+        <div className="flex flex-col justify-evenly">
+          <button
+            onClick={() => onUpdate(foodEntry)}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => mutate()}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 };

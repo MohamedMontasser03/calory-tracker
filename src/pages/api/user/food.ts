@@ -20,7 +20,8 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
       const result = await updateFoodEntry(foodEntry);
       res.status(201).send(result);
     } else if (req.method === "GET") {
-      const foodEntries = await listFoodEntries(session);
+      const { sd = Date(), ed = Date() } = req.query as Record<string, string>;
+      const foodEntries = await listFoodEntries(session, sd, ed);
       res.send(foodEntries);
     } else if (req.method === "DELETE") {
       const {
@@ -60,13 +61,13 @@ const updateFoodEntry = async (foodEntry: FoodEntry) => {
   return result;
 };
 
-const listFoodEntries = async (session: Session) => {
+const listFoodEntries = async (session: Session, sd: string, ed: string) => {
   const foodEntries = await prisma.foodEntry.findMany({
     where: {
       userId: session.user?.id,
       date: {
-        gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        lte: new Date(new Date().setHours(23, 59, 59, 999)),
+        gte: new Date(new Date(sd).setHours(0, 0, 0, 0)),
+        lte: new Date(new Date(ed).setHours(23, 59, 59, 999)),
       },
     },
   });

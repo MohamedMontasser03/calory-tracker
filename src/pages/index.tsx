@@ -15,12 +15,8 @@ type HomeProps = {
   maxCalories: number;
 };
 
-const Home: NextPage<HomeProps> = ({
-  foodEntries: initialFoodEntries,
-  user,
-  maxCalories,
-}) => {
-  const { data: foodEntries, isLoading: loadingFoodEntries } = useQuery(
+const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
+  const { data: foodEntriesData, isLoading: loadingFoodEntries } = useQuery(
     ["foodEntries"],
     async () => {
       const res = await fetch("/api/user/food");
@@ -28,7 +24,7 @@ const Home: NextPage<HomeProps> = ({
     },
     {
       enabled: user !== null,
-      initialData: initialFoodEntries,
+      initialData: foodEntries,
       staleTime: 1000,
     }
   );
@@ -66,7 +62,7 @@ const Home: NextPage<HomeProps> = ({
             <div className="text-gray-700">Loading...</div>
           ) : (
             <FoodEntryList
-              foodEntries={foodEntries}
+              foodEntries={foodEntriesData}
               maxCalories={maxCaloriesData.maxCalories}
             />
           )}

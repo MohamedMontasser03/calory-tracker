@@ -8,9 +8,16 @@ import MaxCaloriesModal from "./MaxCaloryModal";
 type FoodEntryListProps = {
   foodEntries: FoodEntry[];
   maxCalories: number;
+  isFullDate?: boolean;
+  noEdit?: boolean;
 };
 
-const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
+const FoodEntryList = ({
+  foodEntries,
+  maxCalories,
+  isFullDate = false,
+  noEdit = false,
+}: FoodEntryListProps) => {
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [showMaxCaloryMenu, setShowMaxCaloryMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState<FoodEntry | null>(null);
@@ -30,32 +37,34 @@ const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
   };
 
   useEffect(() => {
-    if (calories > maxCalories) {
+    if (calories > maxCalories && !noEdit) {
       toast("You've consumed too many calories!", {
         type: "warning",
         autoClose: 2000,
         hideProgressBar: true,
       });
     }
-    if (price > maxPrice) {
+    if (price > maxPrice && !noEdit) {
       toast("You've Paid too much!", {
         type: "warning",
         autoClose: 2000,
         hideProgressBar: true,
       });
     }
-  }, [foodEntries, maxCalories, calories, price]);
+  }, [foodEntries, maxCalories, calories, price, noEdit]);
 
   return (
     <div className="bg-purple-300 rounded flex flex-col p-2 w-80 md:w-96">
       <div className=" flex flex-row justify-between pb-2">
         <h1 className="font-semibold">Food Entry List</h1>
-        <button
-          onClick={() => setShowEditMenu(true)}
-          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
-        >
-          Add Food Entry
-        </button>
+        {!noEdit && (
+          <button
+            onClick={() => setShowEditMenu(true)}
+            className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
+          >
+            Add Food Entry
+          </button>
+        )}
       </div>
       <div className="flex flex-col gap-4">
         {foodEntries.map((foodEntry) => (
@@ -63,6 +72,8 @@ const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
             onUpdate={onUpdate}
             key={foodEntry.id}
             foodEntry={foodEntry}
+            isFullDate={isFullDate}
+            noEdit={noEdit}
           />
         ))}
       </div>
@@ -71,16 +82,18 @@ const FoodEntryList = ({ foodEntries, maxCalories }: FoodEntryListProps) => {
           <span>Total Calories: {calories} calory</span>
           <span>Total Price: {price}$</span>
         </div>
-        <div className="flex flex-col">
-          <span>Max Calories: {maxCalories} calory</span>
-          <span>Max Price: 1000$</span>
-          <button
-            onClick={() => setShowMaxCaloryMenu(true)}
-            className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
-          >
-            Change Max Calories
-          </button>
-        </div>
+        {!noEdit && (
+          <div className="flex flex-col">
+            <span>Max Calories: {maxCalories} calory</span>
+            <span>Max Price: 1000$</span>
+            <button
+              onClick={() => setShowMaxCaloryMenu(true)}
+              className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-1 px-2 text-xs rounded transition-colors"
+            >
+              Change Max Calories
+            </button>
+          </div>
+        )}
       </div>
       {showEditMenu && (
         <FoodEditMenu
