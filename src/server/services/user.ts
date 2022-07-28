@@ -10,7 +10,10 @@ export const doesUserExist = async (userId: string) => {
   return userCount > 0;
 };
 
-export const getUserData = async (userId: string) => {
+export const getUserData = async (userId?: string) => {
+  if (!userId) {
+    return null;
+  }
   const user = await prisma.user.findUnique({
     where: {
       id: userId,

@@ -7,9 +7,10 @@ import Head from "next/head";
 import Link from "next/link";
 import FoodEntryList from "../components/food-entry-list/FoodEntryList";
 import Header from "../components/header/Header";
-import { prisma } from "../server/db/client";
 import { listFoodEntries } from "../server/services/foodEntries";
 import { getUserData } from "../server/services/user";
+import { quickFetch } from "../utils/fetch";
+import { getRedirection } from "../utils/queries";
 
 type HomeProps = {
   user: User;
@@ -20,22 +21,15 @@ type HomeProps = {
 const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
   const { data: foodEntriesData, isLoading: loadingFoodEntries } = useQuery(
     ["foodEntries"],
-    async () => {
-      const res = await fetch("/api/user/food");
-      return await res.json();
-    },
+    () => quickFetch<{ foodEntries: FoodEntry[] }>("/api/user/food"),
     {
-      enabled: user !== null,
-      initialData: foodEntries,
+      initialData: { foodEntries },
       staleTime: 1000,
     }
   );
   const { data: maxCaloriesData, isLoading: loadingMaxCalories } = useQuery(
     ["maxCalories"],
-    async () => {
-      const res = await fetch("/api/user/calory");
-      return await res.json();
-    },
+    () => quickFetch<{ maxCalories: number }>("/api/user/calory"),
     {
       initialData: { maxCalories },
       staleTime: 1000,
@@ -63,8 +57,8 @@ const Home: NextPage<HomeProps> = ({ foodEntries, user, maxCalories }) => {
             <div className="text-gray-700">Loading...</div>
           ) : (
             <FoodEntryList
-              foodEntries={foodEntriesData}
-              maxCalories={maxCaloriesData.maxCalories}
+              foodEntries={foodEntriesData?.foodEntries || []}
+              maxCalories={maxCaloriesData?.maxCalories || 0}
             />
           )}
         </div>
@@ -78,25 +72,27 @@ export default Home;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getSession(ctx);
-  if (!session || !session.user || !session.user.id) {
+  const userData = await getUserData(session?.user?.id);
+  const redirect = getRedirection({
+    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+      !session || !session.user || !session.user.id,
+    "/admin": userData?.admin,
+  });
+  if (redirect) {
     ctx.res.writeHead(302, {
-      Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
+      Location: redirect,
     });
     ctx.res.end();
     return { props: {} };
   }
-  const foodEntries = await listFoodEntries(session.user.id, Date(), Date());
-  const userData = await getUserData(session.user.id);
-  if (userData?.admin) {
-    ctx.res.writeHead(302, {
-      Location: "/admin",
-    });
-    ctx.res.end();
-    return { props: {} };
-  }
+  const foodEntries = await listFoodEntries(
+    session?.user?.id || "",
+    Date(),
+    Date()
+  );
   return {
     props: {
-      user: session.user,
+      user: session?.user,
       maxCalories: userData?.maxCalories,
       foodEntries: JSON.parse(JSON.stringify(foodEntries)),
     },

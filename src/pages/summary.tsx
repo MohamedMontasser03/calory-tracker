@@ -5,20 +5,17 @@ import { User } from "next-auth";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import {
-  Calendar,
-  DateRange,
-  DateRangePicker,
-  RangeKeyDict,
-} from "react-date-range";
+import { DateRange } from "react-date-range";
 import FoodEntryList from "../components/food-entry-list/FoodEntryList";
 import Header from "../components/header/Header";
-import { prisma } from "../server/db/client";
 import {
   getDaysWithExcessCalories,
   listFoodEntries,
 } from "../server/services/foodEntries";
-import { setToMidnight, toLocaleDateString } from "../utils/date";
+import { getUserData } from "../server/services/user";
+import { toLocaleDateString } from "../utils/date";
+import { quickFetch } from "../utils/fetch";
+import { getRedirection } from "../utils/queries";
 
 type SummaryProps = {
   user: User;
@@ -44,15 +41,13 @@ const Summary: NextPage<SummaryProps> = ({
     refetch,
   } = useQuery(
     ["sumFoodEntries"],
-    async () => {
-      const res = await fetch(
+    () =>
+      quickFetch<{ foodEntries: FoodEntry[] }>(
         `/api/user/food?sd=${dateRange.startDate.toLocaleString()}&ed=${dateRange.endDate.toLocaleString()}`
-      );
-      return await res.json();
-    },
+      ),
     {
       enabled: user !== null || dateRange.key === "selection",
-      initialData: foodEntries,
+      initialData: { foodEntries },
       staleTime: 1000,
     }
   );
@@ -94,7 +89,7 @@ const Summary: NextPage<SummaryProps> = ({
             <div className="text-gray-700">Loading...</div>
           ) : (
             <FoodEntryList
-              foodEntries={foodEntriesData}
+              foodEntries={foodEntriesData?.foodEntries || []}
               maxCalories={0}
               isFullDate={true}
               noEdit={true}
@@ -125,30 +120,32 @@ export default Summary;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getSession(ctx);
-  if (!session || !session.user || !session.user.id) {
-    ctx.res.writeHead(302, {
-      Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
-    });
-    ctx.res.end();
-    return { props: {} };
-  }
-  const userData = await prisma.user.findUnique({
-    where: { id: session.user?.id },
-    select: { maxCalories: true, admin: true },
+  const userData = await getUserData(session?.user?.id);
+  const redirect = getRedirection({
+    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+      !session || !session.user || !session.user.id,
+    "/admin": userData?.admin,
   });
-  const foodEntries = await listFoodEntries(session.user.id, Date(), Date());
-  if (userData?.admin) {
+  if (redirect) {
     ctx.res.writeHead(302, {
-      Location: "/admin",
+      Location: redirect,
     });
     ctx.res.end();
     return { props: {} };
   }
+  const foodEntries = await listFoodEntries(
+    session?.user?.id || "",
+    Date(),
+    Date()
+  );
   const { daysWithExcessCalories, earliestDate } =
-    await getDaysWithExcessCalories(session.user?.id!, userData?.maxCalories!);
+    await getDaysWithExcessCalories(
+      session?.user?.id || "",
+      userData?.maxCalories!
+    );
   return {
     props: {
-      user: session.user,
+      user: session?.user,
       foodEntries: JSON.parse(JSON.stringify(foodEntries)),
       daysWithExcessCalories,
       earliestDate: earliestDate?.toLocaleString(),

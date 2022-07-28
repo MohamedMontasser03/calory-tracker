@@ -1,6 +1,6 @@
 import React from "react";
 import { ErrorMessage, Formik } from "formik";
-import { string, z } from "zod";
+import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { quickFetch } from "../../utils/fetch";
@@ -39,7 +39,7 @@ const MaxCaloriesModal = ({ onClose, userId }: MaxCaloriesModalProps) => {
               ["maxCalories", userId].filter((v) => v) // remove userId if undefined
             )?.maxCalories || 2100,
         }}
-        onSubmit={async (values, { setSubmitting }) => {
+        onSubmit={(values, { setSubmitting }) => {
           setSubmitting(true);
           mutate(
             { values },

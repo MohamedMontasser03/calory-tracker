@@ -32,7 +32,7 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "GET") {
     const { sd = Date(), ed = Date() } = req.query as Record<string, string>;
     const foodEntries = await listFoodEntries(session.user.id, sd, ed);
-    return res.send(foodEntries);
+    return res.send({ foodEntries });
   }
   if (req.method === "DELETE") {
     const {

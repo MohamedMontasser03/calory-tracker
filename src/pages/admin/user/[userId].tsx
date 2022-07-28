@@ -2,7 +2,6 @@ import type { GetServerSideProps, NextPage } from "next";
 import { FoodEntry, User } from "@prisma/client";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
-import { prisma } from "../../../server/db/client";
 import Header from "../../../components/header/Header";
 import { isAdmin } from "../../../server/services/admin";
 import { useEffect, useState } from "react";
@@ -16,6 +15,8 @@ import { doesUserExist, getUserData } from "../../../server/services/user";
 import { useRouter } from "next/router";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import { quickFetch } from "../../../utils/fetch";
+import { getRedirection } from "../../../utils/queries";
 
 type AdminProps = {
   user: User;
@@ -43,24 +44,21 @@ const Admin: NextPage<AdminProps> = ({
     refetch,
   } = useQuery(
     ["sumFoodEntries", queryUserId],
-    async () => {
-      const res = await fetch(
+    () =>
+      quickFetch<{ foodEntries: FoodEntry[] }>(
         `/api/admin/food?userId=${queryUserId}&sd=${dateRange.startDate.toLocaleString()}&ed=${dateRange.endDate.toLocaleString()}`
-      );
-      return await res.json();
-    },
+      ),
     {
-      enabled: user !== null || dateRange.key === "selection",
       initialData: { foodEntries },
       staleTime: 1000,
     }
   );
   const { data: maxCaloriesData, isLoading: loadingMaxCalories } = useQuery(
     ["maxCalories", queryUserId],
-    async () => {
-      const res = await fetch(`/api/user/calory?userId=${queryUserId}`);
-      return await res.json();
-    },
+    () =>
+      quickFetch<{ maxCalories: number }>(
+        `/api/user/calory?userId=${queryUserId}`
+      ),
     {
       initialData: { maxCalories: user.maxCalories },
       staleTime: 1000,
@@ -119,8 +117,8 @@ const Admin: NextPage<AdminProps> = ({
             <div className="text-gray-700">Loading...</div>
           ) : (
             <FoodEntryList
-              foodEntries={foodEntriesData.foodEntries}
-              maxCalories={maxCaloriesData.maxCalories}
+              foodEntries={foodEntriesData?.foodEntries || []}
+              maxCalories={maxCaloriesData?.maxCalories || 0}
               isFullDate={true}
               noEdit={false}
               userId={queryUserId}
@@ -138,21 +136,17 @@ export default Admin;
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getSession(ctx);
   const queryUserId = ctx.query.userId as string;
-
-  if (!session || !session.user || !session.user.id) {
+  const redirect = getRedirection({
+    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+      !session || !session.user || !session.user.id,
+    "/":
+      !(await isAdmin(session?.user?.id)) ||
+      !queryUserId ||
+      !(await doesUserExist(queryUserId)),
+  });
+  if (redirect) {
     ctx.res.writeHead(302, {
-      Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
-    });
-    ctx.res.end();
-    return { props: {} };
-  }
-  if (
-    !(await isAdmin(session.user.id)) ||
-    !queryUserId ||
-    !(await doesUserExist(queryUserId))
-  ) {
-    ctx.res.writeHead(302, {
-      Location: "/",
+      Location: redirect,
     });
     ctx.res.end();
     return { props: {} };
@@ -160,7 +154,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const foodEntries = await listFoodEntries(queryUserId, Date(), Date());
   return {
     props: {
-      user: session.user,
+      user: session?.user,
       earliestDate: (await getEarliestDate(queryUserId))?.toLocaleString(),
       foodEntries: JSON.parse(JSON.stringify(foodEntries)),
       queryUserData: await getUserData(queryUserId),

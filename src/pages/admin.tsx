@@ -4,7 +4,6 @@ import { getSession } from "next-auth/react";
 import Head from "next/head";
 import Header from "../components/header/Header";
 import { UserList } from "../components/user-list/UserList";
-import { prisma } from "../server/db/client";
 import {
   getAvgWeekCalories,
   getNumOfFoodEntries,
@@ -13,6 +12,7 @@ import {
   isAdmin,
 } from "../server/services/admin";
 import { removeDaysFromDate } from "../utils/date";
+import { getRedirection } from "../utils/queries";
 
 type AdminProps = {
   user: User;
@@ -67,16 +67,14 @@ export default Admin;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getSession(ctx);
-  if (!session || !session.user || !session.user.id) {
+  const redirect = getRedirection({
+    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+      !session || !session.user || !session.user.id,
+    "/": !(await isAdmin(session?.user?.id)),
+  });
+  if (redirect) {
     ctx.res.writeHead(302, {
-      Location: "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F",
-    });
-    ctx.res.end();
-    return { props: {} };
-  }
-  if (!(await isAdmin(session.user?.id))) {
-    ctx.res.writeHead(302, {
-      Location: "/",
+      Location: redirect,
     });
     ctx.res.end();
     return { props: {} };
@@ -84,7 +82,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   return {
     props: {
-      user: session.user,
+      user: session?.user,
       AvgCalories: await getAvgWeekCalories(),
       numOfEntryComparison: await Promise.all([
         getNumOfFoodEntries(removeDaysFromDate(new Date(), 7)),
