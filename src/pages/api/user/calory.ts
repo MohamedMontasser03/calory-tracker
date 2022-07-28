@@ -4,7 +4,7 @@ import { authOptions as nextAuthOptions } from "../auth/[...nextauth]";
 import { prisma } from "../../../server/db/client";
 import { setToMidnight } from "../../../utils/date";
 
-const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
+const calory = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, nextAuthOptions);
 
   if (session) {
@@ -37,4 +37,4 @@ const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-export default foodEntry;
+export default calory;

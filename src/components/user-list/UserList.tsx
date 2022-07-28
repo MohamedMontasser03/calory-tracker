@@ -1,6 +1,8 @@
 import { User } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import React from "react";
+import Link from "next/link";
+import React, { useEffect } from "react";
 
 type UserListProps = {
   userList: User[];
@@ -14,6 +16,39 @@ export const UserList = ({
   currentPage,
 }: UserListProps) => {
   const [curPage, setCurPage] = React.useState(currentPage);
+  const userCount = 10;
+  const {
+    data: userListData,
+    isLoading,
+    refetch,
+  } = useQuery<{
+    userList: User[];
+    numOfPages: number;
+  }>(
+    ["userList"],
+    async () => {
+      const result = await fetch(
+        `/api/admin/users?page=${curPage}&count=${userCount}`
+      );
+      const data = await result.json();
+      return data;
+    },
+    {
+      initialData: {
+        userList: userList,
+        numOfPages: numOfPages,
+      },
+      staleTime: 1000,
+    }
+  );
+
+  useEffect(() => {
+    refetch();
+  }, [curPage, refetch]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
@@ -26,7 +61,7 @@ export const UserList = ({
           </tr>
         </thead>
         <tbody>
-          {userList.map((user) => (
+          {userListData.userList.map((user) => (
             <tr key={user.id}>
               <td className="border px-4 py-2 flex items-center gap-2">
                 <Image
@@ -40,25 +75,30 @@ export const UserList = ({
               </td>
               <td className="border px-4 py-2">{user.email}</td>
               <td className="border px-4 py-2">{user.maxCalories}</td>
+              <td className="border px-4 py-2">
+                <Link href={`/admin/user/${user.id}`}>
+                  <a className="text-blue-400 hover:text-blue-700">View</a>
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
       <div className="flex justify-center gap-2 mt-4">
         <p>
-          Page {curPage + 1} of {numOfPages}
+          Page {curPage + 1} of {userListData.numOfPages}
         </p>
         <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-600"
+          className="bg-blue-500 hover:bg-blue-700 cursor-pointer disabled:cursor-auto text-white font-bold py-2 px-4 rounded disabled:bg-gray-600"
           onClick={() => setCurPage(curPage - 1)}
           disabled={curPage === 0}
         >
           Previous
         </button>
         <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-500 hover:bg-blue-700 cursor-pointer disabled:cursor-auto text-white font-bold py-2 px-4 rounded disabled:bg-gray-600"
           onClick={() => setCurPage(curPage + 1)}
-          disabled={curPage === numOfPages - 1}
+          disabled={curPage === userListData.numOfPages - 1}
         >
           Next
         </button>
