@@ -20,7 +20,11 @@ type FoodEditMenuProps = {
   onClose?: () => void;
 };
 
-const FoodEditMenu = ({ foodEntry, userId, onClose }: FoodEditMenuProps) => {
+const FoodEditMenu: React.FC<FoodEditMenuProps> = ({
+  foodEntry,
+  userId,
+  onClose,
+}) => {
   const { data } = useSession();
   const queryClient = useQueryClient();
   const { mutate } = useMutation(

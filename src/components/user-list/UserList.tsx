@@ -10,11 +10,11 @@ type UserListProps = {
   currentPage: number;
 };
 
-export const UserList = ({
+export const UserList: React.FC<UserListProps> = ({
   userList,
   numOfPages,
   currentPage,
-}: UserListProps) => {
+}) => {
   const [curPage, setCurPage] = React.useState(currentPage);
   const userCount = 10;
   const {

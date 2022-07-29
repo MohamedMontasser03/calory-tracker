@@ -10,12 +10,12 @@ type FoodEntryCardProps = {
   noEdit?: boolean;
 };
 
-const FoodEntryCard = ({
+const FoodEntryCard: React.FC<FoodEntryCardProps> = ({
   foodEntry,
   onUpdate,
   isFullDate = false,
   noEdit = false,
-}: FoodEntryCardProps) => {
+}) => {
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["foodEntries"],

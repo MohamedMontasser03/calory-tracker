@@ -7,7 +7,7 @@ type HeaderProps = {
   user: User;
 };
 
-const Header = ({ user }: HeaderProps) => {
+const Header: React.FC<HeaderProps> = ({ user }) => {
   return (
     <header className="flex justify-center flex-col items-center">
       <div className="flex justify-center items-center gap-2">

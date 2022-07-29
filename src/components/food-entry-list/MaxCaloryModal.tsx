@@ -11,7 +11,10 @@ type MaxCaloriesModalProps = {
   userId?: string;
 };
 
-const MaxCaloriesModal = ({ onClose, userId }: MaxCaloriesModalProps) => {
+const MaxCaloriesModal: React.FC<MaxCaloriesModalProps> = ({
+  onClose,
+  userId,
+}) => {
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["maxCalories"],

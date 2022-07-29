@@ -13,13 +13,13 @@ type FoodEntryListProps = {
   userId?: string;
 };
 
-const FoodEntryList = ({
+const FoodEntryList: React.FC<FoodEntryListProps> = ({
   foodEntries,
   maxCalories,
   isFullDate = false,
   noEdit = false,
   userId,
-}: FoodEntryListProps) => {
+}) => {
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [showMaxCaloryMenu, setShowMaxCaloryMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState<FoodEntry | null>(null);
