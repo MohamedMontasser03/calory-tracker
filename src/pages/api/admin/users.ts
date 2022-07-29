@@ -8,20 +8,26 @@ import {
 } from "../../../server/services/admin";
 
 const users = async (req: NextApiRequest, res: NextApiResponse) => {
-  const session = await getServerSession(req, res, nextAuthOptions);
+  try {
+    const session = await getServerSession(req, res, nextAuthOptions);
 
-  if (!session || !(await isAdmin(session.user?.id))) {
-    return res.send({
-      error:
-        "You must be signed in as Admin to view the protected content on this page.",
-    });
-  }
-  if (req.method === "GET") {
-    const { page, count } = req.query;
-    const users = await getUsers(Number(page), Number(count));
-    return res.status(200).json({
-      userList: users,
-      numOfPages: Math.ceil((await getUserCount()) / Number(count)),
+    if (!session || !(await isAdmin(session.user?.id))) {
+      return res.status(401).send({
+        error:
+          "You must be signed in as Admin to view the protected content on this page.",
+      });
+    }
+    if (req.method === "GET") {
+      const { page, count } = req.query;
+      const users = await getUsers(Number(page), Number(count));
+      return res.status(200).json({
+        userList: users,
+        numOfPages: Math.ceil((await getUserCount()) / Number(count)),
+      });
+    }
+  } catch (err) {
+    return res.status(400).send({
+      error: "Failed to process request",
     });
   }
 };

@@ -10,33 +10,39 @@ import {
 } from "../../../server/services/user";
 
 const calory = async (req: NextApiRequest, res: NextApiResponse) => {
-  const session = await getServerSession(req, res, nextAuthOptions);
+  try {
+    const session = await getServerSession(req, res, nextAuthOptions);
 
-  if (!session || !session.user || !session.user.id) {
-    return res.send({
-      error:
-        "You must be signed in to view the protected content on this page.",
-    });
-  }
-
-  if (req.method === "POST") {
-    const { maxCalories: newMaxCalories, userId } = req.body;
-    if (userId && !isAdmin(session.user.id)) {
-      res.status(403).send("Forbidden");
-      return;
-    }
-    await setUserMaxCalories(userId || session.user.id, newMaxCalories);
-    return res.status(201).send({ success: true });
-  }
-  if (req.method === "GET") {
-    const userId = req.query.userId as string;
-    if (userId && !isAdmin(session.user.id)) {
-      res.status(403).send("Forbidden");
-      return;
+    if (!session || !session.user || !session.user.id) {
+      return res.status(401).send({
+        error:
+          "You must be signed in as Admin to view the protected content on this page.",
+      });
     }
 
-    return res.send({
-      maxCalories: await getUserMaxCalories(userId || session.user.id),
+    if (req.method === "POST") {
+      const { maxCalories: newMaxCalories, userId } = req.body;
+      if (userId && !isAdmin(session.user.id)) {
+        res.status(403).send("Forbidden");
+        return;
+      }
+      await setUserMaxCalories(userId || session.user.id, newMaxCalories);
+      return res.status(201).send({ success: true });
+    }
+    if (req.method === "GET") {
+      const userId = req.query.userId as string;
+      if (userId && !isAdmin(session.user.id)) {
+        res.status(403).send("Forbidden");
+        return;
+      }
+
+      return res.send({
+        maxCalories: await getUserMaxCalories(userId || session.user.id),
+      });
+    }
+  } catch (err) {
+    return res.status(400).send({
+      error: "Failed to process request",
     });
   }
 };

@@ -12,28 +12,34 @@ import { doesUserExist } from "../../../server/services/user";
 import { listFoodEntries } from "../../../server/services/foodEntries";
 
 const users = async (req: NextApiRequest, res: NextApiResponse) => {
-  const session = await getServerSession(req, res, nextAuthOptions);
+  try {
+    const session = await getServerSession(req, res, nextAuthOptions);
 
-  if (!session || !(await isAdmin(session.user?.id))) {
-    return res.send({
-      error:
-        "You must be signed in as Admin to view the protected content on this page.",
-    });
-  }
-  if (req.method === "GET") {
-    const {
-      userId,
-      sd = Date(),
-      ed = Date(),
-    } = req.query as Record<string, string>;
-    if (!userId || !doesUserExist(userId)) {
-      res.status(404).json({
-        error: "User does not exist",
+    if (!session || !(await isAdmin(session.user?.id))) {
+      return res.status(401).send({
+        error:
+          "You must be signed in as Admin to view the protected content on this page.",
       });
-      return;
     }
-    return res.status(200).json({
-      foodEntries: await listFoodEntries(userId, sd, ed),
+    if (req.method === "GET") {
+      const {
+        userId,
+        sd = Date(),
+        ed = Date(),
+      } = req.query as Record<string, string>;
+      if (!userId || !doesUserExist(userId)) {
+        res.status(404).json({
+          error: "User does not exist",
+        });
+        return;
+      }
+      return res.status(200).json({
+        foodEntries: await listFoodEntries(userId, sd, ed),
+      });
+    }
+  } catch (err) {
+    return res.status(400).send({
+      error: "Failed to process request",
     });
   }
 };
