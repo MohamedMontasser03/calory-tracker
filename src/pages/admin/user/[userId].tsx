@@ -17,9 +17,10 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { quickFetch } from "../../../utils/fetch";
 import { getRedirection } from "../../../utils/queries";
+import { User as AuthUser } from "next-auth";
 
 type AdminProps = {
-  user: User;
+  user: AuthUser;
   earliestDate: string;
   foodEntries: FoodEntry[];
   queryUserData: User;
@@ -60,7 +61,7 @@ const Admin: NextPage<AdminProps> = ({
         `/api/user/calory?userId=${queryUserId}`
       ),
     {
-      initialData: { maxCalories: user.maxCalories },
+      initialData: { maxCalories: queryUserData.maxCalories },
       staleTime: 1000,
     }
   );

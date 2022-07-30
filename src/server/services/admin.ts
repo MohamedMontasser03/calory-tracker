@@ -25,21 +25,24 @@ export const getUserCount = async (): Promise<number> => {
 };
 
 export const getAvgWeekCalories = async (): Promise<number> => {
-  const weekFoodEntries = await prisma.foodEntry.findMany({
-    where: {
-      date: {
-        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        lte: new Date(),
+  const [weekFoodEntries, userCount] = await Promise.all([
+    prisma.foodEntry.findMany({
+      where: {
+        date: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          lte: new Date(),
+        },
       },
-    },
-    select: {
-      calories: true,
-    },
-  });
+      select: {
+        calories: true,
+      },
+    }),
+    getUserCount(),
+  ]);
   const weekCalories = weekFoodEntries.reduce((acc, curr) => {
     return acc + curr.calories;
   }, 0);
-  return weekCalories / weekFoodEntries.length;
+  return weekCalories / userCount;
 };
 
 export const getNumOfFoodEntries = async (endOfWeek: Date): Promise<number> => {

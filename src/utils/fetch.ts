@@ -11,7 +11,7 @@ export const quickFetch = async <T>(
         "Content-Type": "application/json",
       },
     });
-    return await response.json();
+    return response.json();
   } catch (err) {
     console.error(err);
   }
