@@ -13,6 +13,7 @@ import {
 } from "../server/services/admin";
 import { removeDaysFromDate } from "../utils/date";
 import { getRedirection } from "../utils/queries";
+import { promise } from "zod";
 
 type AdminProps = {
   user: User;
@@ -66,30 +67,53 @@ export default Admin;
 
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const session = await getSession(ctx);
-  const redirect = getRedirection({
-    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
-      !session || !session.user || !session.user.id,
-    "/": !(await isAdmin(session?.user?.id)),
-  });
-  if (redirect) {
-    ctx.res.writeHead(302, {
-      Location: redirect,
+  try {
+    const session = await getSession(ctx);
+    const redirect = getRedirection({
+      "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+        !session || !session.user || !session.user.id,
+      "/": !(await isAdmin(session?.user?.id)),
     });
-    ctx.res.end();
+    if (redirect) {
+      ctx.res.writeHead(302, {
+        Location: redirect,
+      });
+      ctx.res.end();
+      return { props: {} };
+    }
+
+    const promises = await Promise.allSettled([
+      getAvgWeekCalories(),
+      getNumOfFoodEntries(removeDaysFromDate(new Date(), 7)),
+      getNumOfFoodEntries(new Date()),
+      getUsers(0, 10),
+      getUserCount(),
+    ]);
+
+    const [
+      AvgCalories,
+      prevNumOfEntries,
+      curNumOfEntries,
+      userList,
+      userCount,
+    ] = promises.map((p) => {
+      if (p.status === "rejected") {
+        throw p.reason;
+      }
+      return p.value;
+    });
+
+    return {
+      props: {
+        user: session?.user,
+        AvgCalories,
+        numOfEntryComparison: [prevNumOfEntries, curNumOfEntries],
+        userList,
+        numOfPages: Math.ceil((userCount as number) / 10),
+      },
+    };
+  } catch (err) {
+    console.error(err);
     return { props: {} };
   }
-
-  return {
-    props: {
-      user: session?.user,
-      AvgCalories: await getAvgWeekCalories(),
-      numOfEntryComparison: await Promise.all([
-        getNumOfFoodEntries(removeDaysFromDate(new Date(), 7)),
-        getNumOfFoodEntries(new Date()),
-      ]),
-      userList: await getUsers(0, 10),
-      numOfPages: Math.ceil((await getUserCount()) / 10),
-    },
-  };
 };

@@ -119,36 +119,51 @@ export default Summary;
 
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const session = await getSession(ctx);
-  const userData = await getUserData(session?.user?.id);
-  const redirect = getRedirection({
-    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
-      !session || !session.user || !session.user.id,
-    "/admin": userData?.admin,
-  });
-  if (redirect) {
-    ctx.res.writeHead(302, {
-      Location: redirect,
+  try {
+    const session = await getSession(ctx);
+    const userData = await getUserData(session?.user?.id);
+
+    const redirect = getRedirection({
+      "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+        !session || !session.user || !session.user.id,
+      "/admin": userData?.admin,
     });
-    ctx.res.end();
+    if (redirect) {
+      ctx.res.writeHead(302, {
+        Location: redirect,
+      });
+      ctx.res.end();
+      return { props: {} };
+    }
+
+    const promises = await Promise.allSettled([
+      listFoodEntries(session?.user?.id || "", Date(), Date()),
+      getDaysWithExcessCalories(
+        session?.user?.id || "",
+        userData?.maxCalories!
+      ),
+    ]);
+    const [foodEntries, { daysWithExcessCalories, earliestDate }] =
+      promises.map((p) => {
+        if (p.status === "rejected") {
+          throw p.reason;
+        }
+        return p.value;
+      }) as [
+        FoodEntry[],
+        { daysWithExcessCalories: string[]; earliestDate: string }
+      ];
+
+    return {
+      props: {
+        user: session?.user,
+        foodEntries: JSON.parse(JSON.stringify(foodEntries)),
+        daysWithExcessCalories,
+        earliestDate: earliestDate?.toLocaleString(),
+      },
+    };
+  } catch (err) {
+    console.error(err);
     return { props: {} };
   }
-  const foodEntries = await listFoodEntries(
-    session?.user?.id || "",
-    Date(),
-    Date()
-  );
-  const { daysWithExcessCalories, earliestDate } =
-    await getDaysWithExcessCalories(
-      session?.user?.id || "",
-      userData?.maxCalories!
-    );
-  return {
-    props: {
-      user: session?.user,
-      foodEntries: JSON.parse(JSON.stringify(foodEntries)),
-      daysWithExcessCalories,
-      earliestDate: earliestDate?.toLocaleString(),
-    },
-  };
 };

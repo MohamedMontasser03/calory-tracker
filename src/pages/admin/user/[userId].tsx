@@ -134,30 +134,47 @@ export default Admin;
 
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const session = await getSession(ctx);
-  const queryUserId = ctx.query.userId as string;
-  const redirect = getRedirection({
-    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
-      !session || !session.user || !session.user.id,
-    "/":
-      !(await isAdmin(session?.user?.id)) ||
-      !queryUserId ||
-      !(await doesUserExist(queryUserId)),
-  });
-  if (redirect) {
-    ctx.res.writeHead(302, {
-      Location: redirect,
+  try {
+    const session = await getSession(ctx);
+    const queryUserId = ctx.query.userId as string;
+    const [userExists, isAnAdmin] = await Promise.all([
+      doesUserExist(queryUserId),
+      isAdmin(session?.user?.id),
+    ]);
+    const redirect = getRedirection({
+      "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+        !session || !session.user || !session.user.id,
+      "/": !queryUserId || !isAnAdmin,
+      "/admin": !userExists,
     });
-    ctx.res.end();
+    if (redirect) {
+      ctx.res.writeHead(302, {
+        Location: redirect,
+      });
+      ctx.res.end();
+      return { props: {} };
+    }
+    const promises = await Promise.allSettled([
+      listFoodEntries(queryUserId, Date(), Date()),
+      getUserData(queryUserId),
+      getEarliestDate(queryUserId),
+    ]);
+    const [foodEntries, queryUserData, earliestDate] = promises.map((p) => {
+      if (p.status === "rejected") {
+        throw p.reason;
+      }
+      return p.value;
+    }) as [FoodEntry[], User, string];
+    return {
+      props: {
+        user: session?.user,
+        earliestDate: earliestDate.toLocaleString(),
+        foodEntries: JSON.parse(JSON.stringify(foodEntries)),
+        queryUserData,
+      },
+    };
+  } catch (err) {
+    console.error(err);
     return { props: {} };
   }
-  const foodEntries = await listFoodEntries(queryUserId, Date(), Date());
-  return {
-    props: {
-      user: session?.user,
-      earliestDate: (await getEarliestDate(queryUserId))?.toLocaleString(),
-      foodEntries: JSON.parse(JSON.stringify(foodEntries)),
-      queryUserData: await getUserData(queryUserId),
-    },
-  };
 };

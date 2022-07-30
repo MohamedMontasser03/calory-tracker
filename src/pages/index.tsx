@@ -71,30 +71,35 @@ export default Home;
 
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const session = await getSession(ctx);
-  const userData = await getUserData(session?.user?.id);
-  const redirect = getRedirection({
-    "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
-      !session || !session.user || !session.user.id,
-    "/admin": userData?.admin,
-  });
-  if (redirect) {
-    ctx.res.writeHead(302, {
-      Location: redirect,
+  try {
+    const session = await getSession(ctx);
+    const userData = await getUserData(session?.user?.id);
+    const redirect = getRedirection({
+      "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
+        !session || !session.user || !session.user.id,
+      "/admin": userData?.admin,
     });
-    ctx.res.end();
+    if (redirect) {
+      ctx.res.writeHead(302, {
+        Location: redirect,
+      });
+      ctx.res.end();
+      return { props: {} };
+    }
+    const foodEntries = await listFoodEntries(
+      session?.user?.id || "",
+      Date(),
+      Date()
+    );
+    return {
+      props: {
+        user: session?.user,
+        maxCalories: userData?.maxCalories,
+        foodEntries: JSON.parse(JSON.stringify(foodEntries)),
+      },
+    };
+  } catch (err) {
+    console.error(err);
     return { props: {} };
   }
-  const foodEntries = await listFoodEntries(
-    session?.user?.id || "",
-    Date(),
-    Date()
-  );
-  return {
-    props: {
-      user: session?.user,
-      maxCalories: userData?.maxCalories,
-      foodEntries: JSON.parse(JSON.stringify(foodEntries)),
-    },
-  };
 };
