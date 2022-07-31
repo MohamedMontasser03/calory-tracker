@@ -1,11 +1,8 @@
 import { User } from "@prisma/client";
 import { prisma } from "../db/client";
 
-export const getUsers = async (
-  page: number,
-  count: number = 10
-): Promise<User[]> => {
-  const users = await prisma.user.findMany({
+export const getUsers = (page: number, count: number = 10): Promise<User[]> => {
+  const users = prisma.user.findMany({
     where: {
       admin: false,
     },
@@ -15,8 +12,8 @@ export const getUsers = async (
   return users;
 };
 
-export const getUserCount = async (): Promise<number> => {
-  const count = await prisma.user.count({
+export const getUserCount = (): Promise<number> => {
+  const count = prisma.user.count({
     where: {
       admin: false,
     },
@@ -45,8 +42,8 @@ export const getAvgWeekCalories = async (): Promise<number> => {
   return weekCalories / userCount;
 };
 
-export const getNumOfFoodEntries = async (endOfWeek: Date): Promise<number> => {
-  const foodEntriesCount = await prisma.foodEntry.count({
+export const getNumOfFoodEntries = (endOfWeek: Date): Promise<number> => {
+  const foodEntriesCount = prisma.foodEntry.count({
     where: {
       date: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),

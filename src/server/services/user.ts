@@ -10,11 +10,11 @@ export const doesUserExist = async (userId: string) => {
   return userCount > 0;
 };
 
-export const getUserData = async (userId?: string) => {
+export const getUserData = (userId?: string) => {
   if (!userId) {
     return null;
   }
-  const user = await prisma.user.findUnique({
+  const user = prisma.user.findUnique({
     where: {
       id: userId,
     },
@@ -34,11 +34,8 @@ export const getUserMaxCalories = async (userId: string) => {
   return user?.maxCalories;
 };
 
-export const setUserMaxCalories = async (
-  userId: string,
-  maxCalories: number
-) => {
-  await prisma.user.update({
+export const setUserMaxCalories = (userId: string, maxCalories: number) => {
+  prisma.user.update({
     where: {
       id: userId,
     },
