@@ -13,7 +13,6 @@ import {
 } from "../server/services/admin";
 import { removeDaysFromDate } from "../utils/date";
 import { getRedirection } from "../utils/queries";
-import { promise } from "zod";
 
 type AdminProps = {
   user: User;
@@ -114,6 +113,10 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     };
   } catch (err) {
     console.error(err);
+    ctx.res.writeHead(500, {
+      Location: "/error",
+    });
+    ctx.res.end();
     return { props: {} };
   }
 };

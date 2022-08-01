@@ -176,6 +176,10 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     };
   } catch (err) {
     console.error(err);
+    ctx.res.writeHead(500, {
+      Location: "/error",
+    });
+    ctx.res.end();
     return { props: {} };
   }
 };
