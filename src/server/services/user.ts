@@ -35,7 +35,7 @@ export const getUserMaxCalories = async (userId: string) => {
 };
 
 export const setUserMaxCalories = (userId: string, maxCalories: number) => {
-  prisma.user.update({
+  return prisma.user.update({
     where: {
       id: userId,
     },
