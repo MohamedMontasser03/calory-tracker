@@ -2,7 +2,6 @@ import { FoodEntry } from "@prisma/client";
 import React from "react";
 import { ErrorMessage, Formik } from "formik";
 import { z } from "zod";
-import { useSession } from "next-auth/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
@@ -25,19 +24,28 @@ const FoodEditMenu: React.FC<FoodEditMenuProps> = ({
   userId,
   onClose,
 }) => {
-  const { data } = useSession();
+  const isEditing = !!foodEntry;
+  const isAdmin = !!userId;
+  const initialDate = new Date(isEditing ? foodEntry.date : Date());
+  // make sure the date is only available for admins and only admins can set userId
+  const dateToValue = isAdmin ? getDateTimeInputFromDate : getTimeInputFromDate;
+  const valueToDate = isAdmin ? getDateFromDateTimeInput : getDateFromTimeInput;
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["foodEntries"],
     ({ values }: { values: Record<string, string | number> }) =>
-      quickFetch(`/api/user/food`, foodEntry ? "PATCH" : "POST", {
-        foodEntry: {
-          ...(foodEntry || {}),
-          ...values,
-          userId: userId || data?.user?.id,
-          date: valueToDate((values.date as string) || ""),
-        },
-      }),
+      quickFetch(
+        `/api/${isAdmin ? "admin" : "user"}/food`,
+        foodEntry ? "PATCH" : "POST",
+        {
+          foodEntry: {
+            ...(foodEntry || {}),
+            ...values,
+            userId: userId,
+            date: valueToDate((values.date as string) || ""),
+          },
+        }
+      ),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["foodEntries"]);
@@ -46,12 +54,6 @@ const FoodEditMenu: React.FC<FoodEditMenuProps> = ({
     }
   );
 
-  const isEditing = !!foodEntry;
-  const isAdmin = !!userId;
-  const initialDate = new Date(isEditing ? foodEntry.date : Date());
-  // make sure the date is only available for admins and only admins can set userId
-  const dateToValue = isAdmin ? getDateTimeInputFromDate : getTimeInputFromDate;
-  const valueToDate = isAdmin ? getDateFromDateTimeInput : getDateFromTimeInput;
   return (
     <div
       className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"

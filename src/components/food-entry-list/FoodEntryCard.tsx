@@ -1,5 +1,6 @@
 import { FoodEntry } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import React from "react";
 import { quickFetch } from "../../utils/fetch";
 
@@ -17,11 +18,14 @@ const FoodEntryCard: React.FC<FoodEntryCardProps> = ({
   noEdit = false,
 }) => {
   const queryClient = useQueryClient();
+  const { data } = useSession();
+  const isAdmin = foodEntry.userId !== data?.user?.id;
   const { mutate } = useMutation(
     ["foodEntries"],
     () =>
-      quickFetch("/api/user/food", "DELETE", {
-        foodEntry,
+      quickFetch(`/api/${isAdmin ? "admin" : "user"}/food`, "DELETE", {
+        foodId: foodEntry.id,
+        userId: foodEntry.userId,
       }),
     {
       onSuccess: () => {

@@ -6,6 +6,12 @@ import {
   getUsers,
   isAdmin,
 } from "../../../server/services/admin";
+import { z } from "zod";
+
+const getQuerySchema = z.object({
+  page: z.preprocess((a) => Number(a), z.number().nonnegative().int()),
+  count: z.preprocess((a) => Number(a), z.number().positive().int()),
+});
 
 const users = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
@@ -13,21 +19,25 @@ const users = async (req: NextApiRequest, res: NextApiResponse) => {
 
     if (!session || !(await isAdmin(session.user?.id))) {
       return res.status(401).send({
-        error:
-          "You must be signed in as Admin to view the protected content on this page.",
+        error: "You must be signed in as Admin to access this endpoint.",
       });
     }
     if (req.method === "GET") {
-      const { page, count } = req.query;
-      const users = await getUsers(Number(page), Number(count));
+      const { page, count } = getQuerySchema.parse(req.query);
+      const [users, userCount] = await Promise.all([
+        getUsers(page, count),
+        getUserCount(),
+      ]);
+
       return res.status(200).json({
         userList: users,
-        numOfPages: Math.ceil((await getUserCount()) / Number(count)),
+        numOfPages: Math.ceil(userCount / count),
       });
     }
   } catch (err) {
     return res.status(400).send({
-      error: "Failed to process request",
+      message: "Failed to process request",
+      error: err,
     });
   }
 };

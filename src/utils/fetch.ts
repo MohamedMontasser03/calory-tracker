@@ -11,6 +11,9 @@ export const quickFetch = async <T>(
         "Content-Type": "application/json",
       },
     });
+    if (response.status >= 400) {
+      throw new Error(await response.text());
+    }
     return response.json();
   } catch (err) {
     console.error(err);

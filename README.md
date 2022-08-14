@@ -18,7 +18,7 @@
     To run in production mode, run the following commands in order:
     ```
     yarn
-    npx prisma migrate dev
+    npx prisma db push
     yarn build
     yarn start
     ```

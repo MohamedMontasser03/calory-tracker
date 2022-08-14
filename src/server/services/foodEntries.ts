@@ -2,7 +2,7 @@ import { FoodEntry } from "@prisma/client";
 import { prisma } from "../../server/db/client";
 import { setToMidnight } from "../../utils/date";
 
-export const addFoodEntry = (foodEntry: FoodEntry) => {
+export const addFoodEntry = (foodEntry: Omit<FoodEntry, "id">) => {
   const result = prisma.foodEntry.create({
     data: {
       ...foodEntry,
@@ -38,7 +38,16 @@ export const listFoodEntries = (userId: string, sd: string, ed: string) => {
   return foodEntries;
 };
 
-export const deleteFoodEntries = (entryId: string) => {
+export const deleteFoodEntries = async (userId: string, entryId: string) => {
+  const result = await prisma.foodEntry.findFirst({
+    where: {
+      id: entryId,
+      userId,
+    },
+  });
+  if (!result) {
+    return;
+  }
   return prisma.foodEntry.delete({
     where: {
       id: entryId,

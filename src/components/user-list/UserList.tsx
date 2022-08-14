@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect } from "react";
+import { quickFetch } from "../../utils/fetch";
 
 type UserListProps = {
   userList: User[];
@@ -26,13 +27,14 @@ export const UserList: React.FC<UserListProps> = ({
     numOfPages: number;
   }>(
     ["userList"],
-    async () => {
-      const result = await fetch(
-        `/api/admin/users?page=${curPage}&count=${userCount}`
-      );
-      const data = await result.json();
-      return data;
-    },
+    () =>
+      quickFetch(
+        `/api/admin/users?page=${curPage}&count=${userCount}`,
+        "GET"
+      ) as Promise<{
+        userList: User[];
+        numOfPages: number;
+      }>,
     {
       initialData: {
         userList: userList,
