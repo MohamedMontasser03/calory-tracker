@@ -1,6 +1,5 @@
 import type { GetServerSideProps, NextPage } from "next";
 import { User } from "@prisma/client";
-import { getSession } from "next-auth/react";
 import Head from "next/head";
 import Header from "../components/header/Header";
 import { UserList } from "../components/user-list/UserList";
@@ -9,10 +8,10 @@ import {
   getNumOfFoodEntries,
   getUserCount,
   getUsers,
-  isAdmin,
 } from "../server/services/admin";
 import { removeDaysFromDate } from "../utils/date";
 import { getRedirection } from "../utils/queries";
+import { getSession, Session } from "./api/auth/[...nextauth]";
 
 type AdminProps = {
   user: User;
@@ -67,11 +66,11 @@ export default Admin;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
-    const session = await getSession(ctx);
+    const session = await getSession(ctx.req);
     const redirect = getRedirection({
       "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
         !session || !session.user || !session.user.id,
-      "/": !(await isAdmin(session?.user?.id)),
+      "/": !session?.user?.isAdmin,
     });
     if (redirect) {
       ctx.res.writeHead(302, {

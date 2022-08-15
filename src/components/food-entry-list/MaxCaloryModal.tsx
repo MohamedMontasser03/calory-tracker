@@ -5,6 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { quickFetch } from "../../utils/fetch";
 import { getErrorsFromValidation } from "../../utils/validation";
+import { useSession } from "../../utils/queries";
+import Router from "next/router";
 
 type MaxCaloriesModalProps = {
   onClose?: () => void;
@@ -15,6 +17,7 @@ const MaxCaloriesModal: React.FC<MaxCaloriesModalProps> = ({
   onClose,
   userId,
 }) => {
+  const { data } = useSession();
   const queryClient = useQueryClient();
   const { mutate } = useMutation(
     ["maxCalories"],
@@ -29,7 +32,9 @@ const MaxCaloriesModal: React.FC<MaxCaloriesModalProps> = ({
       },
     }
   );
-
+  if (!data?.user.isAdmin && userId && userId !== data?.user.id) {
+    Router.push("/error");
+  }
   return (
     <div
       className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"

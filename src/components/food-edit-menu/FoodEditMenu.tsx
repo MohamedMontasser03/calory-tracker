@@ -12,6 +12,8 @@ import {
 } from "../../utils/date";
 import { getErrorsFromValidation } from "../../utils/validation";
 import { quickFetch } from "../../utils/fetch";
+import { useSession } from "../../utils/queries";
+import Router from "next/router";
 
 type FoodEditMenuProps = {
   foodEntry?: FoodEntry | null;
@@ -24,8 +26,9 @@ const FoodEditMenu: React.FC<FoodEditMenuProps> = ({
   userId,
   onClose,
 }) => {
+  const { data } = useSession();
   const isEditing = !!foodEntry;
-  const isAdmin = !!userId;
+  const isAdmin = data?.user?.isAdmin;
   const initialDate = new Date(isEditing ? foodEntry.date : Date());
   // make sure the date is only available for admins and only admins can set userId
   const dateToValue = isAdmin ? getDateTimeInputFromDate : getTimeInputFromDate;
@@ -53,7 +56,9 @@ const FoodEditMenu: React.FC<FoodEditMenuProps> = ({
       },
     }
   );
-
+  if (!isAdmin && userId && userId !== data?.user.id) {
+    Router.push("/error");
+  }
   return (
     <div
       className="fixed flex justify-center items-center h-full w-full bg-black bg-opacity-60 top-0 left-0"

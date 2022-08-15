@@ -4,6 +4,8 @@ import FoodEditMenu from "../food-edit-menu/FoodEditMenu";
 import FoodEntryCard from "./FoodEntryCard";
 import { toast } from "react-toastify";
 import MaxCaloriesModal from "./MaxCaloryModal";
+import { useSession } from "../../utils/queries";
+import Router from "next/router";
 
 type FoodEntryListProps = {
   foodEntries: FoodEntry[];
@@ -20,6 +22,7 @@ const FoodEntryList: React.FC<FoodEntryListProps> = ({
   noEdit = false,
   userId,
 }) => {
+  const { data } = useSession();
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [showMaxCaloryMenu, setShowMaxCaloryMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState<FoodEntry | null>(null);
@@ -32,7 +35,11 @@ const FoodEntryList: React.FC<FoodEntryListProps> = ({
     0
   );
   const maxPrice = 1000;
-  const isAdmin = !!userId;
+  const isAdmin = data?.user?.isAdmin;
+
+  if (!isAdmin && userId && userId !== data?.user.id) {
+    Router.push("/error");
+  }
 
   const onUpdate = (foodEntry: FoodEntry) => {
     setIsUpdating(foodEntry);

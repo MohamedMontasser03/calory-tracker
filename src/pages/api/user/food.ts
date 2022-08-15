@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession as getServerSession } from "next-auth";
-import { authOptions as nextAuthOptions } from "../auth/[...nextauth]";
+import { getSession } from "../auth/[...nextauth]";
 import {
   addFoodEntry,
   deleteFoodEntries,
@@ -35,7 +34,7 @@ const patchBodySchema = z.object({
 
 const foodEntry = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    const session = await getServerSession(req, res, nextAuthOptions);
+    const session = await getSession(req);
 
     if (!session || !session.user || !session.user.id) {
       return res.status(401).send({

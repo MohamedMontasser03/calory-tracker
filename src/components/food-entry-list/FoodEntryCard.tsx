@@ -1,8 +1,9 @@
 import { FoodEntry } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import Router from "next/router";
 import React from "react";
 import { quickFetch } from "../../utils/fetch";
+import { useSession } from "../../utils/queries";
 
 type FoodEntryCardProps = {
   foodEntry: FoodEntry;
@@ -19,7 +20,7 @@ const FoodEntryCard: React.FC<FoodEntryCardProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const { data } = useSession();
-  const isAdmin = foodEntry.userId !== data?.user?.id;
+  const isAdmin = data?.user?.isAdmin;
   const { mutate } = useMutation(
     ["foodEntries"],
     () =>
@@ -34,7 +35,9 @@ const FoodEntryCard: React.FC<FoodEntryCardProps> = ({
       },
     }
   );
-
+  if (isAdmin && foodEntry.userId !== data?.user.id) {
+    Router.push("/error");
+  }
   return (
     <div className="flex flex-row justify-between bg-purple-500 rounded px-2 py-4">
       <div className="flex flex-col justify-between">

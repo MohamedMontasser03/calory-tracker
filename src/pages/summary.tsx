@@ -2,7 +2,6 @@ import { FoodEntry } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import type { GetServerSideProps, NextPage } from "next";
 import { User } from "next-auth";
-import { getSession } from "next-auth/react";
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-date-range";
@@ -12,10 +11,11 @@ import {
   getDaysWithExcessCalories,
   listFoodEntries,
 } from "../server/services/foodEntries";
-import { getUserData } from "../server/services/user";
+import { getUserMaxCalories } from "../server/services/user";
 import { toLocaleDateString } from "../utils/date";
 import { quickFetch } from "../utils/fetch";
 import { getRedirection } from "../utils/queries";
+import { getSession } from "./api/auth/[...nextauth]";
 
 type SummaryProps = {
   user: User;
@@ -120,13 +120,12 @@ export default Summary;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
-    const session = await getSession(ctx);
-    const userData = await getUserData(session?.user?.id);
+    const session = await getSession(ctx.req);
 
     const redirect = getRedirection({
       "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
         !session || !session.user || !session.user.id,
-      "/admin": userData?.admin,
+      "/admin": session?.user.isAdmin,
     });
     if (redirect) {
       ctx.res.writeHead(302, {
@@ -140,7 +139,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       listFoodEntries(session?.user?.id || "", Date(), Date()),
       getDaysWithExcessCalories(
         session?.user?.id || "",
-        userData?.maxCalories!
+        (await getUserMaxCalories(session?.user?.id!)) || 0
       ),
     ]);
     const [foodEntries, { daysWithExcessCalories, earliestDate }] =

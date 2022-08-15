@@ -1,13 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession as getServerSession } from "next-auth";
-import { authOptions as nextAuthOptions } from "../auth/[...nextauth]";
-import { isAdmin } from "../../../server/services/admin";
+import { getSession } from "../auth/[...nextauth]";
 import {
   doesUserExist,
   getUserMaxCalories,
   setUserMaxCalories,
 } from "../../../server/services/user";
-import { promise, z } from "zod";
+import { z } from "zod";
 
 const getQuerySchema = z.object({
   userId: z.string().optional(),
@@ -19,7 +17,7 @@ const postBodySchema = z.object({
 
 const calory = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    const session = await getServerSession(req, res, nextAuthOptions);
+    const session = await getSession(req);
 
     if (!session || !session.user || !session.user.id) {
       return res.status(401).send({
@@ -35,11 +33,9 @@ const calory = async (req: NextApiRequest, res: NextApiResponse) => {
         const { maxCalories: newMaxCalories, userId } = postBodySchema.parse(
           req.body
         );
-        const [admin, userExists] = await Promise.all([
-          isAdmin(session.user?.id),
-          doesUserExist(userId || ""),
-        ]);
-        if (userId && !admin) return res.status(403).send("Forbidden");
+        const userExists = await doesUserExist(userId || "");
+        if (userId && !session.user.isAdmin)
+          return res.status(403).send("Forbidden");
 
         if (userId && !userExists)
           return res.status(404).send("User does not exist");
@@ -48,9 +44,8 @@ const calory = async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(201).send({ success: true });
       },
       GET: async (req, res) => {
-        const admin = await isAdmin(session.user!.id);
         const userId = getQuerySchema.parse(req.query).userId;
-        if (userId && !admin) {
+        if (userId && !session.user.isAdmin) {
           res.status(403).send("Forbidden");
           return;
         }

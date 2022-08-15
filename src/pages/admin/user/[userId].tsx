@@ -1,9 +1,7 @@
 import type { GetServerSideProps, NextPage } from "next";
 import { FoodEntry, User } from "@prisma/client";
-import { getSession } from "next-auth/react";
 import Head from "next/head";
 import Header from "../../../components/header/Header";
-import { isAdmin } from "../../../server/services/admin";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-date-range";
 import FoodEntryList from "../../../components/food-entry-list/FoodEntryList";
@@ -18,6 +16,7 @@ import Image from "next/image";
 import { quickFetch } from "../../../utils/fetch";
 import { getRedirection } from "../../../utils/queries";
 import { User as AuthUser } from "next-auth";
+import { getSession } from "../../api/auth/[...nextauth]";
 
 type AdminProps = {
   user: AuthUser;
@@ -136,16 +135,13 @@ export default Admin;
 // make sure user is logged in and redirect to login page if not
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   try {
-    const session = await getSession(ctx);
+    const session = await getSession(ctx.req);
     const queryUserId = ctx.query.userId as string;
-    const [userExists, isAnAdmin] = await Promise.all([
-      doesUserExist(queryUserId),
-      isAdmin(session?.user?.id),
-    ]);
+    const userExists = doesUserExist(queryUserId);
     const redirect = getRedirection({
       "/api/auth/signin?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2F":
         !session || !session.user || !session.user.id,
-      "/": !queryUserId || !isAnAdmin,
+      "/": !queryUserId || !session?.user.isAdmin,
       "/admin": !userExists,
     });
     if (redirect) {

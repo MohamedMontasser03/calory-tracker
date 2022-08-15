@@ -1,11 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession as getServerSession } from "next-auth";
-import { authOptions as nextAuthOptions } from "../auth/[...nextauth]";
-import {
-  getUserCount,
-  getUsers,
-  isAdmin,
-} from "../../../server/services/admin";
+import { getSession } from "../auth/[...nextauth]";
+import { getUserCount, getUsers } from "../../../server/services/admin";
 import { z } from "zod";
 
 const getQuerySchema = z.object({
@@ -15,9 +10,9 @@ const getQuerySchema = z.object({
 
 const users = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    const session = await getServerSession(req, res, nextAuthOptions);
+    const session = await getSession(req);
 
-    if (!session || !(await isAdmin(session.user?.id))) {
+    if (!session || !session.user.isAdmin) {
       return res.status(401).send({
         error: "You must be signed in as Admin to access this endpoint.",
       });

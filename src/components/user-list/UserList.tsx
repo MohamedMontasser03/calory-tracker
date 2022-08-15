@@ -2,8 +2,10 @@ import { User } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
+import Router from "next/router";
 import React, { useEffect } from "react";
 import { quickFetch } from "../../utils/fetch";
+import { useSession } from "../../utils/queries";
 
 type UserListProps = {
   userList: User[];
@@ -16,6 +18,7 @@ export const UserList: React.FC<UserListProps> = ({
   numOfPages,
   currentPage,
 }) => {
+  const { data } = useSession();
   const [curPage, setCurPage] = React.useState(currentPage);
   const userCount = 10;
   const {
@@ -47,6 +50,10 @@ export const UserList: React.FC<UserListProps> = ({
   useEffect(() => {
     refetch();
   }, [curPage, refetch]);
+
+  if (!data?.user?.isAdmin) {
+    Router.push("/error");
+  }
 
   if (isLoading) {
     return <div>Loading...</div>;
